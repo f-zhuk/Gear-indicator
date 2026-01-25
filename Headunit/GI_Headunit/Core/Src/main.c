@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "lv_conf.h"
+#include "../lv_conf.h"
 #include "lvgl.h"
 /* USER CODE END Includes */
 
