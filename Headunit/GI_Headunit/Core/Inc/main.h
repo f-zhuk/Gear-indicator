@@ -25,12 +25,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include <stdint.h>
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+//SPI_HandleTypeDef hspi1;
 #include "ST7735.h"
 /* USER CODE END Includes */
 
@@ -59,7 +61,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-
+//SPI_HandleTypeDef hspi1;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

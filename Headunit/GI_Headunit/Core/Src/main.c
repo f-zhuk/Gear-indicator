@@ -45,7 +45,7 @@ CAN_HandleTypeDef hcan;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t TX_Buffer [] = "A" ; // DATA to send
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,34 +59,9 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void sendCommand(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
-{
-  HAL_SPI_Transmit_IT(&hspi1, addr, numArgs); //Sending in Interrupt mode
-  HAL_Delay(100);
-}
 
-void displayInit(const uint8_t *addr) {
 
-  uint8_t numCommands, cmd, numArgs;
-  uint16_t ms;
 
-  numCommands = *(addr++); // Number of commands to follow
-  while (numCommands--) {              // For each command...
-    cmd = *(addr++);       // Read command
-    numArgs = *(addr++);   // Number of args to follow
-    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
-    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
-    sendCommand(cmd, addr, numArgs);
-    addr += numArgs;
-
-    if (ms) {
-      ms = *(addr++); // Read post-command delay time (ms)
-      if (ms == 255)
-        ms = 500; // If 255, delay for 500 ms
-      HAL_Delay(ms);
-    }
-  }
-}
 /* USER CODE END 0 */
 
 /**
@@ -121,16 +96,22 @@ int main(void)
   MX_CAN_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  displayInit(Bcmd);
+  //displayInit(Bcmd);
+  //initR(INITR_MINI160x80);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    //HAL_SPI_Transmit_IT(&hspi1, TX_Buffer, 1); //Sending in Interrupt mode
+    //test();
+    initR(&hspi1, INITR_MINI160x80);
     HAL_Delay(1000);
+    //HAL_Delay(100);
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -234,7 +215,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;

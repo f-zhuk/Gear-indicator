@@ -1,8 +1,297 @@
 #include "ST7735.h"
-#include "ST77xx.h"
 
+#include <limits.h>
+
+#include "main.h"
+
+#define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
 
 uint8_t tabcolor = INITR_GREENTAB;
+
+uint8_t _colstart = 0;   ///< Some displays need this changed to offset
+uint8_t _rowstart = 0;       ///< Some displays need this changed to offset
+uint8_t _xstart = 0;
+uint8_t _ystart = 0;
+uint8_t _height = 0;
+uint8_t _width = 0;
+uint8_t spiMode = 0; ///< Certain display needs MODE3 instead
+
+// Regular grayscale
+const uint32_t pallete[16] = 
+{
+    0x000000,
+    0x111111,
+    0x222222,
+    0x333333,
+    0x444444,
+    0x555555,
+    0x666666,
+    0x777777,
+    0x888888,
+    0x999999,
+    0xAAAAAA,
+    0xBBBBBB,
+    0xCCCCCC,
+    0xDDDDDD,
+    0xEEEEEE,
+    0xFFFFFF,
+};
+
+SPI_HandleTypeDef ST7735_SPI;
+
+/**************************************************************************/
+/*!
+    @brief  Companion code to the initiliazation tables. Reads and issues
+            a series of LCD commands stored in PROGMEM byte array.
+    @param  addr  Flash memory array with commands and data to send
+*/
+/*************************************************************************
+void displayInit(const uint8_t *addr) {
+
+  uint8_t numCommands, cmd, numArgs;
+  uint16_t ms;
+
+  numCommands = *(addr++); // Number of commands to follow
+  while (numCommands--) {              // For each command...
+    cmd = *(addr++);       // Read command
+    numArgs = *(addr++);   // Number of args to follow
+    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
+    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
+    sendCommand(cmd, addr, numArgs);
+    addr += numArgs;
+
+    if (ms) {
+      ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
+      if (ms == 255)
+        ms = 500; // If 255, delay for 500 ms
+      delay(ms);
+    }
+  }
+}
+*/
+
+void sendCommand(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
+{
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
+  HAL_SPI_Transmit_IT(&ST7735_SPI, &cmd, 1);
+  HAL_SPI_Transmit_IT(&ST7735_SPI, addr, numArgs); //Sending in Interrupt mode
+  HAL_Delay(100);
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+}
+
+void displayInit(const uint8_t *addr) {
+
+  uint8_t numCommands, cmd, numArgs;
+  uint16_t ms;
+
+  numCommands = *(addr++); // Number of commands to follow
+  while (numCommands--) {              // For each command...
+    cmd = *(addr++);       // Read command
+    numArgs = *(addr++);   // Number of args to follow
+    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
+    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
+    sendCommand(cmd, addr, numArgs);
+    addr += numArgs;
+
+    if (ms) {
+      ms = *(addr++); // Read post-command delay time (ms)
+      if (ms == 255)
+        ms = 500; // If 255, delay for 500 ms
+      HAL_Delay(ms);
+    }
+  }
+}
+
+
+/**************************************************************************/
+/*!
+    @brief  Initialization code common to all ST77XX displays
+    @param  cmdList  Flash memory array with commands and data to send
+*/
+/**************************************************************************/
+void commonInit(const uint8_t *cmdList) {
+  //begin();
+
+  if (cmdList) {
+    displayInit(cmdList);
+  }
+}
+
+/**************************************************************************/
+/*!
+  @brief  SPI displays set an address window rectangle for blitting pixels
+  @param  x  Top left corner x coordinate
+  @param  y  Top left corner y coordinate
+  @param  w  Width of window
+  @param  h  Height of window
+*/
+/**************************************************************************/
+void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  x += _xstart;
+  y += _ystart;
+  uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
+  uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
+
+  //writeCommand(ST77XX_CASET); // Column addr set
+  //SPI_WRITE32(xa);
+
+  //writeCommand(ST77XX_RASET); // Row addr set
+  //SPI_WRITE32(ya);
+
+  //writeCommand(ST77XX_RAMWR); // write to RAM
+}
+
+/**************************************************************************/
+/*!
+    @brief  Set origin of (0,0) of display with offsets
+    @param  col  The offset from 0 for the column address
+    @param  row  The offset from 0 for the row address
+*/
+/**************************************************************************/
+void setColRowStart(int8_t col, int8_t row) {
+  _colstart = col;
+  _rowstart = row;
+}
+
+/**************************************************************************/
+/*!
+ @brief  Change whether display is on or off
+ @param  enable True if you want the display ON, false OFF
+ */
+/**************************************************************************/
+void enableDisplay(bool enable) {
+  //sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
+}
+
+/**************************************************************************/
+/*!
+ @brief  Change whether TE pin output is on or off
+ @param  enable True if you want the TE pin ON, false OFF
+ */
+/**************************************************************************/
+void enableTearing(bool enable) {
+  //sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
+}
+
+/**************************************************************************/
+/*!
+ @brief  Change whether sleep mode is on or off
+ @param  enable True if you want sleep mode ON, false OFF
+ */
+/**************************************************************************/
+void enableSleep(bool enable) {
+  //sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
+}
+
+////////// stuff not actively being used, but kept for posterity
+/*
+
+ uint8_t ST77xx::spiread(void) {
+ uint8_t r = 0;
+ if (_sid > 0) {
+ r = shiftIn(_sid, _sclk, MSBFIRST);
+ } else {
+ //SID_DDR &= ~_BV(SID);
+ //int8_t i;
+ //for (i=7; i>=0; i--) {
+ //  SCLK_PORT &= ~_BV(SCLK);
+ //  r <<= 1;
+ //  r |= (SID_PIN >> SID) & 0x1;
+ //  SCLK_PORT |= _BV(SCLK);
+ //}
+ //SID_DDR |= _BV(SID);
+
+ }
+ return r;
+ }
+
+ void ST77xx::dummyclock(void) {
+
+ if (_sid > 0) {
+ digitalWrite(_sclk, LOW);
+ digitalWrite(_sclk, HIGH);
+ } else {
+ // SCLK_PORT &= ~_BV(SCLK);
+ //SCLK_PORT |= _BV(SCLK);
+ }
+ }
+ uint8_t ST77xx::readdata(void) {
+ *portOutputRegister(rsport) |= rspin;
+
+ *portOutputRegister(csport) &= ~ cspin;
+
+ uint8_t r = spiread();
+
+ *portOutputRegister(csport) |= cspin;
+
+ return r;
+
+ }
+
+ uint8_t ST77xx::readcommand8(uint8_t c) {
+ digitalWrite(_rs, LOW);
+
+ *portOutputRegister(csport) &= ~ cspin;
+
+ spiwrite(c);
+
+ digitalWrite(_rs, HIGH);
+ pinMode(_sid, INPUT); // input!
+ digitalWrite(_sid, LOW); // low
+ spiread();
+ uint8_t r = spiread();
+
+
+ *portOutputRegister(csport) |= cspin;
+
+
+ pinMode(_sid, OUTPUT); // back to output
+ return r;
+ }
+
+
+ uint16_t ST77xx::readcommand16(uint8_t c) {
+ digitalWrite(_rs, LOW);
+ if (_cs)
+ digitalWrite(_cs, LOW);
+
+ spiwrite(c);
+ pinMode(_sid, INPUT); // input!
+ uint16_t r = spiread();
+ r <<= 8;
+ r |= spiread();
+ if (_cs)
+ digitalWrite(_cs, HIGH);
+
+ pinMode(_sid, OUTPUT); // back to output
+ return r;
+ }
+
+ uint32_t ST77xx::readcommand32(uint8_t c) {
+ digitalWrite(_rs, LOW);
+ if (_cs)
+ digitalWrite(_cs, LOW);
+ spiwrite(c);
+ pinMode(_sid, INPUT); // input!
+
+ dummyclock();
+ dummyclock();
+
+ uint32_t r = spiread();
+ r <<= 8;
+ r |= spiread();
+ r <<= 8;
+ r |= spiread();
+ r <<= 8;
+ r |= spiread();
+ if (_cs)
+ digitalWrite(_cs, HIGH);
+
+ pinMode(_sid, OUTPUT); // back to output
+ return r;
+ }
+
+ */
 
 // SCREEN INITIALIZATION ***************************************************
 
@@ -180,7 +469,7 @@ static const uint8_t
     @brief  Initialization code common to all ST7735B displays
 */
 /**************************************************************************/
-void Adafruit_ST7735::initB(void) {
+void initB(void) {
   commonInit(Bcmd);
   setRotation(0);
 }
@@ -191,7 +480,12 @@ void Adafruit_ST7735::initB(void) {
     @param  options  Tab color from adafruit purchase
 */
 /**************************************************************************/
-void Adafruit_ST7735::initR(uint8_t options) {
+void initR(SPI_HandleTypeDef *hspi, uint8_t options) {
+  ST7735_SPI = *hspi;
+
+
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   commonInit(Rcmd1);
   if (options == INITR_GREENTAB) {
     displayInit(Rcmd2green);
@@ -215,8 +509,8 @@ void Adafruit_ST7735::initR(uint8_t options) {
     displayInit(Rcmd2green160x80plugin);
     _colstart = 26;
     _rowstart = 1;
-    invertOnCommand = ST77XX_INVOFF;
-    invertOffCommand = ST77XX_INVON;
+    //invertOnCommand = ST77XX_INVOFF;
+    //invertOffCommand = ST77XX_INVON;
   } else {
     // colstart, rowstart left at default '0' values
     displayInit(Rcmd2red);
@@ -247,10 +541,10 @@ void Adafruit_ST7735::initR(uint8_t options) {
     @param  m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void Adafruit_ST7735::setRotation(uint8_t m) {
+void setRotation(uint8_t m) {
   uint8_t madctl = 0;
 
-  rotation = m & 3; // can't be higher than 3
+  uint8_t rotation = m & 3; // can't be higher than 3
 
   // For ST7735 with GREEN TAB (including HalloWing)...
   if ((tabcolor == INITR_144GREENTAB) || (tabcolor == INITR_HALLOWING)) {
