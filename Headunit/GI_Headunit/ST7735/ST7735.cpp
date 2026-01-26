@@ -48,7 +48,7 @@ Adafruit_ST7735::Adafruit_ST7735(SPIClass *spiClass, int8_t cs, int8_t dc,
 // than the equivalent code.  Companion function follows.
 
 // clang-format off
-static const uint8_t PROGMEM
+static const uint8_t
   Bcmd[] = {                        // Init commands for 7735B screens
     18,                             // 18 commands in list:
     ST77XX_SWRESET,   ST_CMD_DELAY, //  1: Software reset, no args, w/delay

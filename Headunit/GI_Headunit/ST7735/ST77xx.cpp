@@ -22,7 +22,7 @@
   MIT license, all text above must be included in any redistribution
  **************************************************************************/
 
-#include "Adafruit_ST77xx.h"
+#include "ST77xx.h"
 #include <limits.h>
 #if !defined(ARDUINO_STM32_FEATHER) && !defined(ARDUINO_UNOR4_WIFI)
 #if !defined(ARDUINO_UNOR4_MINIMA)
@@ -47,7 +47,7 @@
     @param  miso  SPI MISO pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
+ST77xx::ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
                                  int8_t mosi, int8_t sclk, int8_t rst,
                                  int8_t miso)
     : Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso) {}
@@ -62,7 +62,7 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
+ST77xx::ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
                                  int8_t rst)
     : Adafruit_SPITFT(w, h, cs, dc, rst) {}
 
@@ -78,7 +78,7 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
+ST77xx::ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
                                  int8_t cs, int8_t dc, int8_t rst)
     : Adafruit_SPITFT(w, h, spiClass, cs, dc, rst) {}
 #endif // end !ESP8266
@@ -90,7 +90,7 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
     @param  addr  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
+void ST77xx::displayInit(const uint8_t *addr) {
 
   uint8_t numCommands, cmd, numArgs;
   uint16_t ms;
@@ -120,7 +120,7 @@ void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
     @param  freq  Desired SPI clock frequency
 */
 /**************************************************************************/
-void Adafruit_ST77xx::begin(uint32_t freq) {
+void ST77xx::begin(uint32_t freq) {
   if (!freq) {
     freq = SPI_DEFAULT_FREQ;
   }
@@ -138,7 +138,7 @@ void Adafruit_ST77xx::begin(uint32_t freq) {
     @param  cmdList  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
+void ST77xx::commonInit(const uint8_t *cmdList) {
   begin();
 
   if (cmdList) {
@@ -155,7 +155,7 @@ void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
   @param  h  Height of window
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
+void ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
                                     uint16_t h) {
   x += _xstart;
   y += _ystart;
@@ -177,7 +177,7 @@ void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
     @param  m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setRotation(uint8_t m) {
+void ST77xx::setRotation(uint8_t m) {
   uint8_t madctl = 0;
 
   rotation = m % 4; // can't be higher than 3
@@ -215,7 +215,7 @@ void Adafruit_ST77xx::setRotation(uint8_t m) {
     @param  row  The offset from 0 for the row address
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
+void ST77xx::setColRowStart(int8_t col, int8_t row) {
   _colstart = col;
   _rowstart = row;
 }
@@ -226,7 +226,7 @@ void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
  @param  enable True if you want the display ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableDisplay(boolean enable) {
+void ST77xx::enableDisplay(boolean enable) {
   sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
 }
 
@@ -236,7 +236,7 @@ void Adafruit_ST77xx::enableDisplay(boolean enable) {
  @param  enable True if you want the TE pin ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableTearing(boolean enable) {
+void ST77xx::enableTearing(boolean enable) {
   sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
 }
 
@@ -246,14 +246,14 @@ void Adafruit_ST77xx::enableTearing(boolean enable) {
  @param  enable True if you want sleep mode ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableSleep(boolean enable) {
+void ST77xx::enableSleep(boolean enable) {
   sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
 }
 
 ////////// stuff not actively being used, but kept for posterity
 /*
 
- uint8_t Adafruit_ST77xx::spiread(void) {
+ uint8_t ST77xx::spiread(void) {
  uint8_t r = 0;
  if (_sid > 0) {
  r = shiftIn(_sid, _sclk, MSBFIRST);
@@ -272,7 +272,7 @@ void Adafruit_ST77xx::enableSleep(boolean enable) {
  return r;
  }
 
- void Adafruit_ST77xx::dummyclock(void) {
+ void ST77xx::dummyclock(void) {
 
  if (_sid > 0) {
  digitalWrite(_sclk, LOW);
@@ -282,7 +282,7 @@ void Adafruit_ST77xx::enableSleep(boolean enable) {
  //SCLK_PORT |= _BV(SCLK);
  }
  }
- uint8_t Adafruit_ST77xx::readdata(void) {
+ uint8_t ST77xx::readdata(void) {
  *portOutputRegister(rsport) |= rspin;
 
  *portOutputRegister(csport) &= ~ cspin;
@@ -295,7 +295,7 @@ void Adafruit_ST77xx::enableSleep(boolean enable) {
 
  }
 
- uint8_t Adafruit_ST77xx::readcommand8(uint8_t c) {
+ uint8_t ST77xx::readcommand8(uint8_t c) {
  digitalWrite(_rs, LOW);
 
  *portOutputRegister(csport) &= ~ cspin;
@@ -317,7 +317,7 @@ void Adafruit_ST77xx::enableSleep(boolean enable) {
  }
 
 
- uint16_t Adafruit_ST77xx::readcommand16(uint8_t c) {
+ uint16_t ST77xx::readcommand16(uint8_t c) {
  digitalWrite(_rs, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);
@@ -334,7 +334,7 @@ void Adafruit_ST77xx::enableSleep(boolean enable) {
  return r;
  }
 
- uint32_t Adafruit_ST77xx::readcommand32(uint8_t c) {
+ uint32_t ST77xx::readcommand32(uint8_t c) {
  digitalWrite(_rs, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);
