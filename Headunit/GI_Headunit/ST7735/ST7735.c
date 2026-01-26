@@ -37,7 +37,7 @@ const uint32_t pallete[16] =
     0xFFFFFF,
 };
 
-SPI_HandleTypeDef ST7735_SPI;
+SPI_HandleTypeDef *ST7735_SPI;
 
 /**************************************************************************/
 /*!
@@ -70,13 +70,28 @@ void displayInit(const uint8_t *addr) {
 }
 */
 
-void sendCommand(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
+void sendCommandData(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
 {
-  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
-  HAL_SPI_Transmit_IT(&ST7735_SPI, &cmd, 1);
-  HAL_SPI_Transmit_IT(&ST7735_SPI, addr, numArgs); //Sending in Interrupt mode
-  HAL_Delay(100);
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
+  HAL_Delay(1);
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(ST7735_SPI, &cmd, 1, 100);
+  if(numArgs)
+  {
+    HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
+    HAL_SPI_Transmit_IT(ST7735_SPI, addr, numArgs); //Sending in Interrupt mode
+  }
+}
+void sendCommand(uint8_t cmd)
+{
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
+  HAL_Delay(1);
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(ST7735_SPI, &cmd, 1, 100);
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
 }
 
 void displayInit(const uint8_t *addr) {
@@ -90,7 +105,7 @@ void displayInit(const uint8_t *addr) {
     numArgs = *(addr++);   // Number of args to follow
     ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
     numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
-    sendCommand(cmd, addr, numArgs);
+    sendCommandData(cmd, addr, numArgs);
     addr += numArgs;
 
     if (ms) {
@@ -126,16 +141,11 @@ void commonInit(const uint8_t *cmdList) {
   @param  h  Height of window
 */
 /**************************************************************************/
-void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
-  x += _xstart;
-  y += _ystart;
-  uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
-  uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
-
-  //writeCommand(ST77XX_CASET); // Column addr set
-  //SPI_WRITE32(xa);
-
-  //writeCommand(ST77XX_RASET); // Row addr set
+void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
+  uint8_t BufferX [4] = {0x00, x, 0x00, (x+w-1)};
+  sendCommandData(ST77XX_CASET, BufferX, 4); // Column addr set
+  uint8_t BufferY [4] = {0x00, y, 0x00, (y+h-1)};
+  sendCommandData(ST77XX_RASET, BufferY, 4);// Row addr set
   //SPI_WRITE32(ya);
 
   //writeCommand(ST77XX_RAMWR); // write to RAM
@@ -160,7 +170,7 @@ void setColRowStart(int8_t col, int8_t row) {
  */
 /**************************************************************************/
 void enableDisplay(bool enable) {
-  //sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
+  sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
 }
 
 /**************************************************************************/
@@ -170,7 +180,7 @@ void enableDisplay(bool enable) {
  */
 /**************************************************************************/
 void enableTearing(bool enable) {
-  //sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
+  sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
 }
 
 /**************************************************************************/
@@ -180,7 +190,7 @@ void enableTearing(bool enable) {
  */
 /**************************************************************************/
 void enableSleep(bool enable) {
-  //sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
+  sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
 }
 
 ////////// stuff not actively being used, but kept for posterity
@@ -397,7 +407,7 @@ static const uint8_t
     ST77XX_MADCTL,  1,              // 14: Mem access ctl (directions), 1 arg:
       0xC8,                         //     row/col addr, bottom-top refresh
     ST77XX_COLMOD,  1,              // 15: set color mode, 1 arg, no delay:
-      0x05 },                       //     16-bit color
+      0x03 },                       //     16-bit color
 
   Rcmd2green[] = {                  // 7735R init, part 2 (green tab only)
     2,                              //  2 commands in list:
@@ -481,9 +491,9 @@ void initB(void) {
 */
 /**************************************************************************/
 void initR(SPI_HandleTypeDef *hspi, uint8_t options) {
-  ST7735_SPI = *hspi;
+  ST7735_SPI = hspi;
 
-
+  HAL_GPIO_WritePin(ST7735_RES_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   commonInit(Rcmd1);
@@ -520,7 +530,7 @@ void initR(SPI_HandleTypeDef *hspi, uint8_t options) {
   // Black tab, change MADCTL color filter
   if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
     uint8_t data = 0xC0;
-    sendCommand(ST77XX_MADCTL, &data, 1);
+    sendCommandData(ST77XX_MADCTL, &data, 1);
   }
 
   if (options == INITR_HALLOWING) {
@@ -639,5 +649,5 @@ void setRotation(uint8_t m) {
     break;
   }
 
-  sendCommand(ST77XX_MADCTL, &madctl, 1);
+  sendCommandData(ST77XX_MADCTL, &madctl, 1);
 }

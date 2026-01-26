@@ -45,7 +45,7 @@ CAN_HandleTypeDef hcan;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-uint8_t TX_Buffer [] = "A" ; // DATA to send
+uint8_t TX_Buffer [1000]; // DATA to send
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,19 +96,34 @@ int main(void)
   MX_CAN_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  ST7735_SPI = &hspi1;
   //displayInit(Bcmd);
   //initR(INITR_MINI160x80);
+  initR(&hspi1, INITR_MINI160x80);
+  for (uint16_t i=0; i<1000; i++)
+  {
+    TX_Buffer[i]=0x77;
+  }
+  //sendCommand(ST77XX_IDMON);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t x = 0;
+  uint8_t y = 0;
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    //sendCommand(ST77XX_IDMOFF);
+    setAddrWindow(x, y, 20, 20);
+    sendCommandData(ST77XX_RAMWR, TX_Buffer, 600);
+    x+=10;
+    y+=10;
     //HAL_SPI_Transmit_IT(&hspi1, TX_Buffer, 1); //Sending in Interrupt mode
     //test();
-    initR(&hspi1, INITR_MINI160x80);
-    HAL_Delay(1000);
+    HAL_Delay(100);
+    //sendCommand(ST77XX_IDMON);
+    //HAL_Delay(100);
     //HAL_Delay(100);
     /* USER CODE END WHILE */
 
@@ -251,12 +266,22 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, SPI1_RES_Pin|SPI1_CS_Pin|SPI_DC_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SPI1_RES_Pin SPI1_CS_Pin SPI_DC_Pin */
+  GPIO_InitStruct.Pin = SPI1_RES_Pin|SPI1_CS_Pin|SPI_DC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

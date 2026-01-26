@@ -25,14 +25,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <stdint.h>
+
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
-//SPI_HandleTypeDef hspi1;
+#include <stdint.h>
 #include "ST7735.h"
 /* USER CODE END Includes */
 
@@ -59,6 +58,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI1_RES_Pin GPIO_PIN_3
+#define SPI1_RES_GPIO_Port GPIOA
+#define SPI1_CS_Pin GPIO_PIN_4
+#define SPI1_CS_GPIO_Port GPIOA
+#define SPI_DC_Pin GPIO_PIN_6
+#define SPI_DC_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 //SPI_HandleTypeDef hspi1;

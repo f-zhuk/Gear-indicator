@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "stm32f1xx_hal.h"
 
+#define ST7735_RES_PIN GPIOA, GPIO_PIN_3
 #define ST7735_CS_PIN GPIOA, GPIO_PIN_4
 #define ST7735_DC_PIN GPIOA, GPIO_PIN_6
 
@@ -82,6 +83,8 @@
 #define ST77XX_TEOFF 0x34
 #define ST77XX_TEON 0x35
 #define ST77XX_MADCTL 0x36
+#define ST77XX_IDMOFF 0x38
+#define ST77XX_IDMON 0x39
 #define ST77XX_COLMOD 0x3A
 
 #define ST77XX_MADCTL_MY 0x80
@@ -95,18 +98,14 @@
 #define ST77XX_RDID3 0xDC
 #define ST77XX_RDID4 0xDD
 
-// Some ready-made 16-bit ('565') color settings:
-#define ST77XX_BLACK 0x0000
-#define ST77XX_WHITE 0xFFFF
-#define ST77XX_RED 0xF800
-#define ST77XX_GREEN 0x07E0
-#define ST77XX_BLUE 0x001F
-#define ST77XX_CYAN 0x07FF
-#define ST77XX_MAGENTA 0xF81F
-#define ST77XX_YELLOW 0xFFE0
-#define ST77XX_ORANGE 0xFC00
 
-void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+extern SPI_HandleTypeDef *ST7735_SPI;
+
+void sendCommandData(uint8_t cmd, const uint8_t *addr, uint8_t numArgs);
+void sendCommand(uint8_t cmd);
+
+
+void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
 void setRotation(uint8_t r);
 void enableDisplay(bool enable);
 void enableTearing(bool enable);
