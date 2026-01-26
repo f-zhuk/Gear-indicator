@@ -24,64 +24,11 @@
 
 #include "ST77xx.h"
 #include <limits.h>
-#if !defined(ARDUINO_STM32_FEATHER) && !defined(ARDUINO_UNOR4_WIFI)
-#if !defined(ARDUINO_UNOR4_MINIMA)
-#include "pins_arduino.h"
-#include "wiring_private.h"
-#endif
-#endif
-#include <SPI.h>
+
+#include "stm32f1xx_hal.h"
 
 #define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
 
-/**************************************************************************/
-/*!
-    @brief  Instantiate Adafruit ST77XX driver with software SPI
-    @param  w     Display width in pixels at default rotation setting (0)
-    @param  h     Display height in pixels at default rotation setting (0)
-    @param  cs    Chip select pin #
-    @param  dc    Data/Command pin #
-    @param  mosi  SPI MOSI pin #
-    @param  sclk  SPI Clock pin #
-    @param  rst   Reset pin # (optional, pass -1 if unused)
-    @param  miso  SPI MISO pin # (optional, pass -1 if unused)
-*/
-/**************************************************************************/
-ST77xx::ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
-                                 int8_t mosi, int8_t sclk, int8_t rst,
-                                 int8_t miso)
-    : Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso) {}
-
-/**************************************************************************/
-/*!
-    @brief  Instantiate Adafruit ST77XX driver with hardware SPI
-    @param  w     Display width in pixels at default rotation setting (0)
-    @param  h     Display height in pixels at default rotation setting (0)
-    @param  cs    Chip select pin #
-    @param  dc    Data/Command pin #
-    @param  rst   Reset pin # (optional, pass -1 if unused)
-*/
-/**************************************************************************/
-ST77xx::ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
-                                 int8_t rst)
-    : Adafruit_SPITFT(w, h, cs, dc, rst) {}
-
-#if !defined(ESP8266)
-/**************************************************************************/
-/*!
-    @brief  Instantiate Adafruit ST77XX driver with selectable hardware SPI
-    @param  w     Display width in pixels at default rotation setting (0)
-    @param  h     Display height in pixels at default rotation setting (0)
-    @param  spiClass A pointer to an SPI device to use (e.g. &SPI1)
-    @param  cs    Chip select pin #
-    @param  dc    Data/Command pin #
-    @param  rst   Reset pin # (optional, pass -1 if unused)
-*/
-/**************************************************************************/
-ST77xx::ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
-                                 int8_t cs, int8_t dc, int8_t rst)
-    : Adafruit_SPITFT(w, h, spiClass, cs, dc, rst) {}
-#endif // end !ESP8266
 
 /**************************************************************************/
 /*!
@@ -89,16 +36,16 @@ ST77xx::ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
             a series of LCD commands stored in PROGMEM byte array.
     @param  addr  Flash memory array with commands and data to send
 */
-/**************************************************************************/
-void ST77xx::displayInit(const uint8_t *addr) {
+/*************************************************************************
+void displayInit(const uint8_t *addr) {
 
   uint8_t numCommands, cmd, numArgs;
   uint16_t ms;
 
-  numCommands = pgm_read_byte(addr++); // Number of commands to follow
+  numCommands = *(addr++); // Number of commands to follow
   while (numCommands--) {              // For each command...
-    cmd = pgm_read_byte(addr++);       // Read command
-    numArgs = pgm_read_byte(addr++);   // Number of args to follow
+    cmd = *(addr++);       // Read command
+    numArgs = *(addr++);   // Number of args to follow
     ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
     numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
     sendCommand(cmd, addr, numArgs);
@@ -112,25 +59,8 @@ void ST77xx::displayInit(const uint8_t *addr) {
     }
   }
 }
-
-/**************************************************************************/
-/*!
-    @brief  Initialize ST77xx chip. Connects to the ST77XX over SPI and
-            sends initialization procedure commands
-    @param  freq  Desired SPI clock frequency
 */
-/**************************************************************************/
-void ST77xx::begin(uint32_t freq) {
-  if (!freq) {
-    freq = SPI_DEFAULT_FREQ;
-  }
-  _freq = freq;
 
-  invertOnCommand = ST77XX_INVON;
-  invertOffCommand = ST77XX_INVOFF;
-
-  initSPI(freq, spiMode);
-}
 
 /**************************************************************************/
 /*!
@@ -138,7 +68,7 @@ void ST77xx::begin(uint32_t freq) {
     @param  cmdList  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void ST77xx::commonInit(const uint8_t *cmdList) {
+void commonInit(const uint8_t *cmdList) {
   begin();
 
   if (cmdList) {
@@ -155,7 +85,7 @@ void ST77xx::commonInit(const uint8_t *cmdList) {
   @param  h  Height of window
 */
 /**************************************************************************/
-void ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
+void setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
                                     uint16_t h) {
   x += _xstart;
   y += _ystart;
@@ -177,7 +107,7 @@ void ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
     @param  m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void ST77xx::setRotation(uint8_t m) {
+void setRotation(uint8_t m) {
   uint8_t madctl = 0;
 
   rotation = m % 4; // can't be higher than 3

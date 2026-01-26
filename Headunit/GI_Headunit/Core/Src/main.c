@@ -59,7 +59,34 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void sendCommand(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
+{
+  HAL_SPI_Transmit_IT(&hspi1, addr, numArgs); //Sending in Interrupt mode
+  HAL_Delay(100);
+}
 
+void displayInit(const uint8_t *addr) {
+
+  uint8_t numCommands, cmd, numArgs;
+  uint16_t ms;
+
+  numCommands = *(addr++); // Number of commands to follow
+  while (numCommands--) {              // For each command...
+    cmd = *(addr++);       // Read command
+    numArgs = *(addr++);   // Number of args to follow
+    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
+    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
+    sendCommand(cmd, addr, numArgs);
+    addr += numArgs;
+
+    if (ms) {
+      ms = *(addr++); // Read post-command delay time (ms)
+      if (ms == 255)
+        ms = 500; // If 255, delay for 500 ms
+      HAL_Delay(ms);
+    }
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -94,7 +121,7 @@ int main(void)
   MX_CAN_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  
+  displayInit(Bcmd);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,7 +129,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

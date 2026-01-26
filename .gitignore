@@ -1,0 +1,9 @@
+
+*.bin
+*.elf
+*.hex
+*.map
+*.d
+*.lst
+*.o
+/Headunit/GI_Headunit/build
