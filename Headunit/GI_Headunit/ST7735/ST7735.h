@@ -30,19 +30,11 @@
 #define ST7735_GMCTRP1 0xE0
 #define ST7735_GMCTRN1 0xE1
 
-// Some ready-made 16-bit ('565') color settings:
-#define ST7735_BLACK ST77XX_BLACK
-#define ST7735_WHITE ST77XX_WHITE
-#define ST7735_RED ST77XX_RED
-#define ST7735_GREEN ST77XX_GREEN
-#define ST7735_BLUE ST77XX_BLUE
-#define ST7735_CYAN ST77XX_CYAN
-#define ST7735_MAGENTA ST77XX_MAGENTA
-#define ST7735_YELLOW ST77XX_YELLOW
-#define ST7735_ORANGE ST77XX_ORANGE
-
-#define ST7735_TFTWIDTH 80
-#define ST7735_TFTHEIGHT 160
+#define ST7735_XOFFSET 26
+#define ST7735_YOFFSET 1
+#define ST7735_WIDTH 80
+#define ST7735_HEIGHT 160
+#define ST7735_BUFFER (ST7735_WIDTH/2)*(ST7735_HEIGHT/2)/2
 
 #define ST_CMD_DELAY 0x80 // special signifier for command lists
 
@@ -86,10 +78,12 @@
 
 
 extern SPI_HandleTypeDef *ST7735_SPI;
+extern uint8_t st7735_buffer[ST7735_BUFFER];
+extern uint32_t st7735_pallete[16];
 
 void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs);
 void sendCommand(uint8_t cmd);
-
+void redraw(void);
 
 void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
 void setRotation(uint8_t r);
