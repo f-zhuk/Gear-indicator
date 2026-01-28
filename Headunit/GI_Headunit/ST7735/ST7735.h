@@ -101,7 +101,7 @@
 
 extern SPI_HandleTypeDef *ST7735_SPI;
 
-void sendCommandData(uint8_t cmd, const uint8_t *addr, uint8_t numArgs);
+void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs);
 void sendCommand(uint8_t cmd);
 
 

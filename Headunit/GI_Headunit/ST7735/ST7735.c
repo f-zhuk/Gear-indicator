@@ -70,7 +70,7 @@ void displayInit(const uint8_t *addr) {
 }
 */
 
-void sendCommandData(uint8_t cmd, const uint8_t *addr, uint8_t numArgs)
+void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs)
 {
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);

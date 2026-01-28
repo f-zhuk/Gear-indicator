@@ -102,23 +102,23 @@ int main(void)
   initR(&hspi1, INITR_MINI160x80);
   for (uint16_t i=0; i<1000; i++)
   {
-    TX_Buffer[i]=0x77;
+    TX_Buffer[i]=0xFF;
   }
   //sendCommand(ST77XX_IDMON);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t x = 0;
-  uint8_t y = 0;
+  uint8_t x = 26;
+  uint8_t y = 1;
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     //sendCommand(ST77XX_IDMOFF);
-    setAddrWindow(x, y, 20, 20);
-    sendCommandData(ST77XX_RAMWR, TX_Buffer, 600);
-    x+=10;
-    y+=10;
+    setAddrWindow(x, y, 80, 160);
+    sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
+    //x+=5;
+    //y+=10;
     //HAL_SPI_Transmit_IT(&hspi1, TX_Buffer, 1); //Sending in Interrupt mode
     //test();
     HAL_Delay(100);
