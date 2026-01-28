@@ -6,8 +6,6 @@
 
 #define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
 
-uint8_t tabcolor = INITR_GREENTAB;
-
 uint8_t _colstart = 0;   ///< Some displays need this changed to offset
 uint8_t _rowstart = 0;       ///< Some displays need this changed to offset
 uint8_t _xstart = 0;
@@ -409,49 +407,12 @@ static const uint8_t
     ST77XX_COLMOD,  1,              // 15: set color mode, 1 arg, no delay:
       0x03 },                       //     16-bit color
 
-  Rcmd2green[] = {                  // 7735R init, part 2 (green tab only)
-    2,                              //  2 commands in list:
-    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
-      0x00, 0x02,                   //     XSTART = 0
-      0x00, 0x7F+0x02,              //     XEND = 127
-    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
-      0x00, 0x01,                   //     XSTART = 0
-      0x00, 0x9F+0x01 },            //     XEND = 159
-
-  Rcmd2red[] = {                    // 7735R init, part 2 (red tab only)
-    2,                              //  2 commands in list:
-    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x7F,                   //     XEND = 127
-    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x9F },                 //     XEND = 159
-
-  Rcmd2green144[] = {               // 7735R init, part 2 (green 1.44 tab)
-    2,                              //  2 commands in list:
-    ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x7F,                   //     XEND = 127
-    ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x7F },                 //     XEND = 127
-
   Rcmd2green160x80[] = {            // 7735R init, part 2 (mini 160x80)
     2,                              //  2 commands in list:
     ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
       0x00, 0x00,                   //     XSTART = 0
       0x00, 0x4F,                   //     XEND = 79
     ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x9F },                 //     XEND = 159
-
-  Rcmd2green160x80plugin[] = {      // 7735R init, part 2 (mini 160x80 with plugin FPC)
-    3,                              //  3 commands in list:
-    ST77XX_INVON,  0,              //   1: Display is inverted
-    ST77XX_CASET,   4,              //  2: Column addr set, 4 args, no delay:
-      0x00, 0x00,                   //     XSTART = 0
-      0x00, 0x4F,                   //     XEND = 79
-    ST77XX_RASET,   4,              //  3: Row addr set, 4 args, no delay:
       0x00, 0x00,                   //     XSTART = 0
       0x00, 0x9F },                 //     XEND = 159
 
@@ -490,57 +451,27 @@ void initB(void) {
     @param  options  Tab color from adafruit purchase
 */
 /**************************************************************************/
-void initR(SPI_HandleTypeDef *hspi, uint8_t options) {
+void initR(SPI_HandleTypeDef *hspi) {
   ST7735_SPI = hspi;
 
   HAL_GPIO_WritePin(ST7735_RES_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   commonInit(Rcmd1);
-  if (options == INITR_GREENTAB) {
-    displayInit(Rcmd2green);
-    _colstart = 2;
-    _rowstart = 1;
-  } else if ((options == INITR_144GREENTAB) || (options == INITR_HALLOWING)) {
-    _height = ST7735_TFTHEIGHT_128;
-    _width = ST7735_TFTWIDTH_128;
-    displayInit(Rcmd2green144);
-    _colstart = 2;
-    _rowstart = 3; // For default rotation 0
-  } else if (options == INITR_MINI160x80) {
-    _height = ST7735_TFTWIDTH_80;
-    _width = ST7735_TFTHEIGHT_160;
-    displayInit(Rcmd2green160x80);
-    _colstart = 24;
-    _rowstart = 0;
-  } else if (options == INITR_MINI160x80_PLUGIN) {
-    _height = ST7735_TFTWIDTH_80;
-    _width = ST7735_TFTHEIGHT_160;
-    displayInit(Rcmd2green160x80plugin);
-    _colstart = 26;
-    _rowstart = 1;
-    //invertOnCommand = ST77XX_INVOFF;
-    //invertOffCommand = ST77XX_INVON;
-  } else {
-    // colstart, rowstart left at default '0' values
-    displayInit(Rcmd2red);
-  }
+
+  _height = ST7735_TFTWIDTH;
+  _width = ST7735_TFTHEIGHT;
+  displayInit(Rcmd2green160x80);
+  _colstart = 24;
+  _rowstart = 0;
+
   displayInit(Rcmd3);
 
   // Black tab, change MADCTL color filter
-  if ((options == INITR_BLACKTAB) || (options == INITR_MINI160x80)) {
-    uint8_t data = 0xC0;
-    sendCommandData(ST77XX_MADCTL, &data, 1);
-  }
+  uint8_t data = 0xC0;
+  sendCommandData(ST77XX_MADCTL, &data, 1);
 
-  if (options == INITR_HALLOWING) {
-    // Hallowing is simply a 1.44" green tab upside-down:
-    tabcolor = INITR_144GREENTAB;
-    setRotation(2);
-  } else {
-    tabcolor = options;
-    setRotation(0);
-  }
+  setRotation(0);
 }
 
 // OTHER FUNCTIONS *********************************************************
@@ -552,98 +483,41 @@ void initR(SPI_HandleTypeDef *hspi, uint8_t options) {
 */
 /**************************************************************************/
 void setRotation(uint8_t m) {
-  uint8_t madctl = 0;
+  uint8_t madctl = ST77XX_MADCTL_RGB;
 
   uint8_t rotation = m & 3; // can't be higher than 3
 
-  // For ST7735 with GREEN TAB (including HalloWing)...
-  if ((tabcolor == INITR_144GREENTAB) || (tabcolor == INITR_HALLOWING)) {
-    // ..._rowstart is 3 for rotations 0&1, 1 for rotations 2&3
-    _rowstart = (rotation < 2) ? 3 : 1;
-  }
-
   switch (rotation) {
   case 0:
-    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
-      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
-    } else {
-      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST7735_MADCTL_BGR;
-    }
-
-    if (tabcolor == INITR_144GREENTAB) {
-      _height = ST7735_TFTHEIGHT_128;
-      _width = ST7735_TFTWIDTH_128;
-    } else if (tabcolor == INITR_MINI160x80 ||
-               tabcolor == INITR_MINI160x80_PLUGIN) {
-      _height = ST7735_TFTHEIGHT_160;
-      _width = ST7735_TFTWIDTH_80;
-    } else {
-      _height = ST7735_TFTHEIGHT_160;
-      _width = ST7735_TFTWIDTH_128;
-    }
+    
+    madctl |= ST77XX_MADCTL_MX | ST77XX_MADCTL_MY;
+    
+    _height = ST7735_TFTHEIGHT;
+    _width = ST7735_TFTWIDTH;
     _xstart = _colstart;
     _ystart = _rowstart;
     break;
   case 1:
-    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
-      madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
-    } else {
-      madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST7735_MADCTL_BGR;
-    }
 
-    if (tabcolor == INITR_144GREENTAB) {
-      _width = ST7735_TFTHEIGHT_128;
-      _height = ST7735_TFTWIDTH_128;
-    } else if (tabcolor == INITR_MINI160x80 ||
-               tabcolor == INITR_MINI160x80_PLUGIN) {
-      _width = ST7735_TFTHEIGHT_160;
-      _height = ST7735_TFTWIDTH_80;
-    } else {
-      _width = ST7735_TFTHEIGHT_160;
-      _height = ST7735_TFTWIDTH_128;
-    }
+    madctl |= ST77XX_MADCTL_MY | ST77XX_MADCTL_MV;
+    
+    _width = ST7735_TFTHEIGHT;
+    _height = ST7735_TFTWIDTH;
     _ystart = _colstart;
     _xstart = _rowstart;
     break;
   case 2:
-    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
-      madctl = ST77XX_MADCTL_RGB;
-    } else {
-      madctl = ST7735_MADCTL_BGR;
-    }
-
-    if (tabcolor == INITR_144GREENTAB) {
-      _height = ST7735_TFTHEIGHT_128;
-      _width = ST7735_TFTWIDTH_128;
-    } else if (tabcolor == INITR_MINI160x80 ||
-               tabcolor == INITR_MINI160x80_PLUGIN) {
-      _height = ST7735_TFTHEIGHT_160;
-      _width = ST7735_TFTWIDTH_80;
-    } else {
-      _height = ST7735_TFTHEIGHT_160;
-      _width = ST7735_TFTWIDTH_128;
-    }
+    _height = ST7735_TFTHEIGHT;
+    _width = ST7735_TFTWIDTH;
     _xstart = _colstart;
     _ystart = _rowstart;
     break;
   case 3:
-    if ((tabcolor == INITR_BLACKTAB) || (tabcolor == INITR_MINI160x80)) {
-      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
-    } else {
-      madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST7735_MADCTL_BGR;
-    }
+  
+    madctl |= ST77XX_MADCTL_MX | ST77XX_MADCTL_MV;
 
-    if (tabcolor == INITR_144GREENTAB) {
-      _width = ST7735_TFTHEIGHT_128;
-      _height = ST7735_TFTWIDTH_128;
-    } else if (tabcolor == INITR_MINI160x80 ||
-               tabcolor == INITR_MINI160x80_PLUGIN) {
-      _width = ST7735_TFTHEIGHT_160;
-      _height = ST7735_TFTWIDTH_80;
-    } else {
-      _width = ST7735_TFTHEIGHT_160;
-      _height = ST7735_TFTWIDTH_128;
-    }
+    _width = ST7735_TFTHEIGHT;
+    _height = ST7735_TFTWIDTH;
     _ystart = _colstart;
     _xstart = _rowstart;
     break;

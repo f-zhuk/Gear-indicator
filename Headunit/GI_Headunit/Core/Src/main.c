@@ -99,10 +99,10 @@ int main(void)
   ST7735_SPI = &hspi1;
   //displayInit(Bcmd);
   //initR(INITR_MINI160x80);
-  initR(&hspi1, INITR_MINI160x80);
+  initR(&hspi1);
   for (uint16_t i=0; i<1000; i++)
   {
-    TX_Buffer[i]=0xFF;
+    TX_Buffer[i]=0x00;
   }
   //sendCommand(ST77XX_IDMON);
   /* USER CODE END 2 */
@@ -110,15 +110,24 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint8_t x = 26;
-  uint8_t y = 1;
+  uint8_t y = 2;
   while (1)
   {
+    for (uint16_t i=0; i<160; i++)
+    {
+      setAddrWindow(x, i, 80, 2);
+      sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
+      for (uint16_t j=0; j<120; j++)
+      {
+        TX_Buffer[j]++;
+      }
+    }
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     //sendCommand(ST77XX_IDMOFF);
-    setAddrWindow(x, y, 80, 160);
-    sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
+    //setAddrWindow(x, y, 80, 160);
+    //sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
     //x+=5;
-    //y+=10;
+    y+=1;
     //HAL_SPI_Transmit_IT(&hspi1, TX_Buffer, 1); //Sending in Interrupt mode
     //test();
     HAL_Delay(100);

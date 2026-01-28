@@ -8,18 +8,6 @@
 #define ST7735_CS_PIN GPIOA, GPIO_PIN_4
 #define ST7735_DC_PIN GPIOA, GPIO_PIN_6
 
-// some flags for initR() :(
-#define INITR_GREENTAB 0x00
-#define INITR_REDTAB 0x01
-#define INITR_BLACKTAB 0x02
-#define INITR_18GREENTAB INITR_GREENTAB
-#define INITR_18REDTAB INITR_REDTAB
-#define INITR_18BLACKTAB INITR_BLACKTAB
-#define INITR_144GREENTAB 0x01
-#define INITR_MINI160x80 0x04
-#define INITR_HALLOWING 0x05
-#define INITR_MINI160x80_PLUGIN 0x06
-
 // Some register settings
 #define ST7735_MADCTL_BGR 0x08
 #define ST7735_MADCTL_MH 0x04
@@ -53,10 +41,8 @@
 #define ST7735_YELLOW ST77XX_YELLOW
 #define ST7735_ORANGE ST77XX_ORANGE
 
-#define ST7735_TFTWIDTH_128 128  // for 1.44 and mini
-#define ST7735_TFTWIDTH_80 80    // for mini
-#define ST7735_TFTHEIGHT_128 128 // for 1.44" display
-#define ST7735_TFTHEIGHT_160 160 // for 1.8" and mini display
+#define ST7735_TFTWIDTH 80
+#define ST7735_TFTHEIGHT 160
 
 #define ST_CMD_DELAY 0x80 // special signifier for command lists
 
@@ -118,7 +104,7 @@ void setColRowStart(int8_t col, int8_t row);
 //static const uint8_t Bcmd[];
 
 void initB(void);                             // for ST7735B displays
-void initR(SPI_HandleTypeDef *hspi, uint8_t options); // for ST7735R
+void initR(SPI_HandleTypeDef *hspi);          // for ST7735R
 
 void setRotation(uint8_t m);
 
