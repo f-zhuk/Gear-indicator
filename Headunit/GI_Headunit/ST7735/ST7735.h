@@ -90,6 +90,7 @@ void setRotation(uint8_t r);
 void enableDisplay(bool enable);
 void enableTearing(bool enable);
 void enableSleep(bool enable);
+void enableInvert(bool enable);
 
 //void begin(uint32_t freq = 0);
 void commonInit(const uint8_t *cmdList);

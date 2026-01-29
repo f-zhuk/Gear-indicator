@@ -45,7 +45,13 @@ CAN_HandleTypeDef hcan;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-uint8_t TX_Buffer [1000]; // DATA to send
+static const uint8_t glyph_bitmap[] = {
+    /* U+0020 " " */
+
+    /* U+0021 "!" */
+    0xe, 0xa0, 0xd9, 0xd, 0x90, 0xc8, 0xc, 0x80,
+    0xb7, 0xa, 0x60, 0x11, 0xb, 0x80, 0xd9
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,13 +102,21 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   initR(&hspi1);
+  enableDisplay(false);
+  enableInvert(true);
   //ST7735_SPI = &hspi1;
   //displayInit(Bcmd);
   //initR(INITR_MINI160x80);
-  /*for (uint16_t i=0; i<1000; i++)
+  /**/
+  for (uint16_t i=0; i<10; i++)
   {
-    TX_Buffer[i]=0x00;
-  }*/
+    for (uint16_t j=0; j<3; j++)
+    {
+      st7735_buffer[((ST7735_WIDTH>>1)*(i+10)+10+j)>>1] &= (0xF0>>((j<<2)&0x04));
+      st7735_buffer[((ST7735_WIDTH>>1)*(i+10)+10+j)>>1] |= glyph_bitmap[((i*3+j)>>1)]&(0xF0>>((j<<2)&0x04));
+      //st7735_buffer[(ST7735_WIDTH>>2)*(i+10)+(10+(j>>1))] = st7735_buffer[(ST7735_WIDTH>>2)*(i+10)+(10+(j>>1))] | (0xF0>>((j<<2)&0x04));//glyph_bitmap[(i*3)+(j>>1)];
+    }
+  }
   //sendCommand(ST77XX_IDMON);
   /* USER CODE END 2 */
 
@@ -110,7 +124,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   //uint8_t x = 26;
   //uint8_t y = 1;
-  st7735_pallete[0]=0xF00F00;
+  //st7735_pallete[0]=0xF00F00;
   while (1)
   {
     /*
@@ -123,9 +137,10 @@ int main(void)
         TX_Buffer[j]++;
       }
     }*/
-    HAL_Delay(100);
     redraw();
-    st7735_pallete[0]+=1001;
+    enableDisplay(true);
+    HAL_Delay(100);
+    ////st7735_pallete[0]+=1001;
     //for (uint16_t j=0; j<ST7735_BUFFER; j++)
     //{
      // st7735_buffer[j]+=0x11;

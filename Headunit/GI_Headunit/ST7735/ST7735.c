@@ -95,10 +95,10 @@ static const uint8_t Rcmd2green160x80[] = {            // 7735R init, part 2 (mi
     2,                              //  2 commands in list:
     ST77XX_CASET,   4,              //  1: Column addr set, 4 args, no delay:
       0x00, ST7735_XOFFSET,                   //     XSTART = 26
-      0x00, ST7735_WIDTH+ST7735_XOFFSET,      //     XEND = 79
+      0x00, ST7735_WIDTH-1+ST7735_XOFFSET,      //     XEND = 79
     ST77XX_RASET,   4,              //  2: Row addr set, 4 args, no delay:
       0x00, ST7735_YOFFSET,                   //     XSTART = 0
-      0x00, ST7735_HEIGHT+ST7735_YOFFSET };   //     XEND = 159
+      0x00, ST7735_HEIGHT-1+ST7735_YOFFSET };   //     XEND = 159
 
 static const uint8_t Rcmd3[] = {                       // 7735R init, part 3 (red or green tab)
     4,                              //  4 commands in list:
@@ -114,7 +114,7 @@ static const uint8_t Rcmd3[] = {                       // 7735R init, part 3 (re
       0x00, 0x00, 0x02, 0x10,
     ST77XX_NORON,     ST_CMD_DELAY, //  3: Normal display on, no args, w/delay
       10,                           //     10 ms delay
-    ST77XX_DISPON,    ST_CMD_DELAY, //  4: Main screen turn on, no args w/delay
+    ST77XX_DISPOFF,    ST_CMD_DELAY, //  4: Main screen turn on, no args w/delay
       100 };                        //     100 ms delay
 
 void sendCallback(SPI_HandleTypeDef *hspi)
@@ -134,12 +134,12 @@ void sendCallback(SPI_HandleTypeDef *hspi)
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   while(column<(ST7735_WIDTH>>2))
   {
-    color = st7735_pallete[st7735_buffer[start+column]&0x0F];
+    color = st7735_pallete[(st7735_buffer[start+column]>>4)&0x0F];
     for (uint8_t i=0; i<3; i++)
     {
       st7735_linebuffer[(column*6)+i] = (color>>(8*i))&0xFF;
     }
-    color = st7735_pallete[(st7735_buffer[start+column]>>4)&0x0F];
+    color = st7735_pallete[st7735_buffer[start+column]&0x0F];
     for (uint8_t i=0; i<3; i++)
     {
       st7735_linebuffer[(column*6)+3+i] = (color>>(8*i))&0xFF;
@@ -290,6 +290,16 @@ void enableTearing(bool enable) {
 /**************************************************************************/
 void enableSleep(bool enable) {
   sendCommand(enable ? ST77XX_SLPIN : ST77XX_SLPOUT);
+}
+
+/**************************************************************************/
+/*!
+ @brief  Change whether inverted mode is on or off
+ @param  enable True if you want inverted mode ON, false OFF
+ */
+/**************************************************************************/
+void enableInvert(bool enable){
+  sendCommand(enable ? ST77XX_INVON : ST77XX_INVOFF);
 }
 
 /**************************************************************************/
