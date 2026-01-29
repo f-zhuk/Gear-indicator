@@ -104,9 +104,6 @@ int main(void)
   initR(&hspi1);
   enableDisplay(false);
   enableInvert(true);
-  //ST7735_SPI = &hspi1;
-  //displayInit(Bcmd);
-  //initR(INITR_MINI160x80);
   /**/
   for (uint16_t i=0; i<10; i++)
   {
@@ -117,7 +114,6 @@ int main(void)
       //st7735_buffer[(ST7735_WIDTH>>2)*(i+10)+(10+(j>>1))] = st7735_buffer[(ST7735_WIDTH>>2)*(i+10)+(10+(j>>1))] | (0xF0>>((j<<2)&0x04));//glyph_bitmap[(i*3)+(j>>1)];
     }
   }
-  //sendCommand(ST77XX_IDMON);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -127,36 +123,11 @@ int main(void)
   //st7735_pallete[0]=0xF00F00;
   while (1)
   {
-    /*
-    for (uint16_t i=0; i<160; i++)
-    {
-      setAddrWindow(x, i+1, 80, 2);
-      sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
-      for (uint16_t j=0; j<120; j++)
-      {
-        TX_Buffer[j]++;
-      }
-    }*/
     redraw();
     enableDisplay(true);
     HAL_Delay(100);
-    ////st7735_pallete[0]+=1001;
-    //for (uint16_t j=0; j<ST7735_BUFFER; j++)
-    //{
-     // st7735_buffer[j]+=0x11;
-    //}
 
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-    //sendCommand(ST77XX_IDMOFF);
-    //setAddrWindow(x, y, 80, 160);
-    //sendCommandData(ST77XX_RAMWR, TX_Buffer, 120);
-    //x+=5;
-    //y+=1;
-    //HAL_SPI_Transmit_IT(&hspi1, TX_Buffer, 1); //Sending in Interrupt mode
-    //test();
-    //sendCommand(ST77XX_IDMON);
-    //HAL_Delay(100);
-    //HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

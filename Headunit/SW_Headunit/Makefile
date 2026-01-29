@@ -57,6 +57,7 @@ Core/Src/sysmem.c \
 Core/Src/syscalls.c
 
 C_SOURCES += $(shell find ST7735/ -type f -name '*.c')
+C_SOURCES += $(shell find Fonts/ -type f -name '*.c')
 
 # ASM sources
 ASM_SOURCES =  \
@@ -124,7 +125,8 @@ C_INCLUDES =  \
 -IDrivers/STM32F1xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
--IST7735
+-IST7735 \
+-IFonts
 
 
 # compile gcc flags
