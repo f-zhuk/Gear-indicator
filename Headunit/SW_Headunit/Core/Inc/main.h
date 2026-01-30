@@ -33,8 +33,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include "ST7735.h"
-#include "lv_types.h"
-#include "lv_font.h"
+#include "display.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

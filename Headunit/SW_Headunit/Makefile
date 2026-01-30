@@ -54,7 +54,8 @@ Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_exti.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.c \
 Core/Src/system_stm32f1xx.c \
 Core/Src/sysmem.c \
-Core/Src/syscalls.c
+Core/Src/syscalls.c \
+Core/Src/display.c
 
 C_SOURCES += $(shell find ST7735/ -type f -name '*.c')
 C_SOURCES += $(shell find Fonts/ -type f -name '*.c')
@@ -126,7 +127,7 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
 -IST7735 \
--IFonts
+-IFonts \
 
 
 # compile gcc flags

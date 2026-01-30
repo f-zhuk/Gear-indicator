@@ -193,7 +193,7 @@ void redraw(void)
 */
 /**************************************************************************/
 
-void displayInit(const uint8_t *addr) {
+void ST77XX_sendInitSequence(const uint8_t *addr) {
 
   uint8_t numCommands, cmd, numArgs;
   uint16_t ms;
@@ -213,21 +213,6 @@ void displayInit(const uint8_t *addr) {
         ms = 500; // If 255, delay for 500 ms
       HAL_Delay(ms);
     }
-  }
-}
-
-
-/**************************************************************************/
-/*!
-    @brief  Initialization code common to all ST77XX displays
-    @param  cmdList  Flash memory array with commands and data to send
-*/
-/**************************************************************************/
-void commonInit(const uint8_t *cmdList) {
-  //begin();
-
-  if (cmdList) {
-    displayInit(cmdList);
   }
 }
 
@@ -260,6 +245,15 @@ void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 void setColRowStart(int8_t col, int8_t row) {
   _colstart = col;
   _rowstart = row;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Set origin of (0,0) of display with offsets
+*/
+/**************************************************************************/
+uint8_t* getBufferPointer(void) {
+  return (uint8_t*)&st7735_buffer;
 }
 
 /**************************************************************************/
@@ -316,15 +310,15 @@ void initR(SPI_HandleTypeDef *hspi) {
   HAL_GPIO_WritePin(ST7735_RES_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
-  commonInit(Rcmd1);
+  ST77XX_sendInitSequence(Rcmd1);
 
   _height = ST7735_WIDTH;
   _width = ST7735_HEIGHT;
-  displayInit(Rcmd2green160x80);
+  ST77XX_sendInitSequence(Rcmd2green160x80);
   _colstart = 24;
   _rowstart = 0;
 
-  displayInit(Rcmd3);
+  ST77XX_sendInitSequence(Rcmd3);
 
   // Black tab, change MADCTL color filter
   uint8_t data = 0xC0;

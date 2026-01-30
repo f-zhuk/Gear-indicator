@@ -13,47 +13,18 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-/*#include "../lv_conf_internal.h"
-
-#ifndef __ASSEMBLY__
-#include LV_STDINT_INCLUDE
-#include LV_STDDEF_INCLUDE
-#include LV_STDBOOL_INCLUDE
-#include LV_INTTYPES_INCLUDE
-#include LV_LIMITS_INCLUDE
-#include LV_STDARG_INCLUDE
-#endif */
+/*#include "../lv_conf_internal.h"*/
+#include "display.h"
 
 /*********************
  *      DEFINES
  *********************/
 
-/*If __UINTPTR_MAX__ or UINTPTR_MAX are available, use them to determine arch size*/
-#if defined(__UINTPTR_MAX__) && __UINTPTR_MAX__ > 0xFFFFFFFF
-#define LV_ARCH_64
-
-#elif defined(UINTPTR_MAX) && UINTPTR_MAX > 0xFFFFFFFF
-#define LV_ARCH_64
-
-/*Otherwise use compiler-dependent means to determine arch size*/
-#elif defined(_WIN64) || defined(__x86_64__) || defined(__ppc64__) || defined (__aarch64__)
-#define LV_ARCH_64
-
-#endif
-
-#if LV_USE_3DTEXTURE
-#if LV_USE_OPENGLES
-#define LV_3DTEXTURE_ID_NULL 0u
-#endif
-
-#ifndef LV_3DTEXTURE_ID_NULL
-#error enable LV_USE_OPENGLES to use LV_USE_3DTEXTURE
-#endif
-#endif /*LV_USE_3DTEXTURE*/
-
+ 
 /**********************
  *      TYPEDEFS
  **********************/
+
 
 /* Exclude C enum and struct definitions when included by assembly code */
 #ifndef __ASSEMBLY__
@@ -406,6 +377,228 @@ typedef struct _lv_draw_eve_unit_t lv_draw_eve_unit_t;
 
 #endif /*__ASSEMBLY__*/
 
+/** This describes a glyph.*/
+typedef struct {
+#if LV_FONT_FMT_TXT_LARGE == 0
+    uint32_t bitmap_index : 20;     /**< Start index of the bitmap. A font can be max 1 MB.*/
+    uint32_t adv_w : 12;            /**< Draw the next glyph after this width. 8.4 format (real_value * 16 is stored).*/
+    uint8_t box_w;                  /**< Width of the glyph's bounding box*/
+    uint8_t box_h;                  /**< Height of the glyph's bounding box*/
+    int8_t ofs_x;                   /**< x offset of the bounding box*/
+    int8_t ofs_y;                   /**< y offset of the bounding box. Measured from the top of the line*/
+#else
+    uint32_t bitmap_index;          /**< Start index of the bitmap. A font can be max 4 GB.*/
+    uint32_t adv_w;                 /**< Draw the next glyph after this width. 28.4 format (real_value * 16 is stored).*/
+    uint16_t box_w;                 /**< Width of the glyph's bounding box*/
+    uint16_t box_h;                 /**< Height of the glyph's bounding box*/
+    int16_t ofs_x;                  /**< x offset of the bounding box*/
+    int16_t ofs_y;                  /**< y offset of the bounding box. Measured from the top of the line*/
+#endif
+} lv_font_fmt_txt_glyph_dsc_t;
+
+/** Format of font character map.*/
+typedef enum {
+    LV_FONT_FMT_TXT_CMAP_FORMAT0_FULL,
+    LV_FONT_FMT_TXT_CMAP_SPARSE_FULL,
+    LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY,
+    LV_FONT_FMT_TXT_CMAP_SPARSE_TINY,
+} lv_font_fmt_txt_cmap_type_t;
+
+/**
+ * Map codepoints to a `glyph_dsc`s
+ * Several formats are supported to optimize memory usage
+ * See https://github.com/lvgl/lv_font_conv/blob/master/doc/font_spec.md
+ */
+typedef struct {
+    /** First Unicode character for this range*/
+    uint32_t range_start;
+
+    /** Number of Unicode characters related to this range.
+     * Last Unicode character = range_start + range_length - 1*/
+    uint16_t range_length;
+
+    /** First glyph ID (array index of `glyph_dsc`) for this range*/
+    uint16_t glyph_id_start;
+
+    /*
+    According the specification there are 4 formats:
+        https://github.com/lvgl/lv_font_conv/blob/master/doc/font_spec.md
+
+    For simplicity introduce "relative code point":
+        rcp = codepoint - range_start
+
+    and a search function:
+        search a "value" in an "array" and returns the index of "value".
+
+    Format 0 tiny
+        unicode_list == NULL && glyph_id_ofs_list == NULL
+        glyph_id = glyph_id_start + rcp
+
+    Format 0 full
+        unicode_list == NULL && glyph_id_ofs_list != NULL
+        glyph_id = glyph_id_start + glyph_id_ofs_list[rcp]
+
+    Sparse tiny
+        unicode_list != NULL && glyph_id_ofs_list == NULL
+        glyph_id = glyph_id_start + search(unicode_list, rcp)
+
+    Sparse full
+        unicode_list != NULL && glyph_id_ofs_list != NULL
+        glyph_id = glyph_id_start + glyph_id_ofs_list[search(unicode_list, rcp)]
+    */
+
+    const uint16_t * unicode_list;
+
+    /** if(type == LV_FONT_FMT_TXT_CMAP_FORMAT0_...) it's `uint8_t *`
+     * if(type == LV_FONT_FMT_TXT_CMAP_SPARSE_...)  it's `uint16_t *`
+     */
+    const void * glyph_id_ofs_list;
+
+    /** Length of `unicode_list` and/or `glyph_id_ofs_list`*/
+    uint16_t list_length;
+
+    /** Type of this character map*/
+    lv_font_fmt_txt_cmap_type_t type;
+} lv_font_fmt_txt_cmap_t;
+
+typedef struct {
+    /** The bitmaps of all glyphs */
+    const uint8_t * glyph_bitmap;
+
+    /** Describe the glyphs */
+    const lv_font_fmt_txt_glyph_dsc_t * glyph_dsc;
+
+    /** Map the glyphs to Unicode characters.
+     *Array of `lv_font_cmap_fmt_txt_t` variables */
+    const lv_font_fmt_txt_cmap_t * cmaps;
+
+    /**
+     * Store kerning values.
+     * Can be `lv_font_fmt_txt_kern_pair_t *  or `lv_font_kern_classes_fmt_txt_t *`
+     * depending on `kern_classes`
+     */
+    const void * kern_dsc;
+
+    /** Scale kern values in 12.4 format */
+    uint16_t kern_scale;
+
+    /** Number of cmap tables */
+    uint16_t cmap_num       : 9;
+
+    /** Bit per pixel: 1, 2, 3, 4, 8 */
+    uint16_t bpp            : 4;
+
+    /** Type of `kern_dsc` */
+    uint16_t kern_classes   : 1;
+
+    /**
+     * storage format of the bitmap
+     * from `lv_font_fmt_txt_bitmap_format_t`
+     */
+    uint16_t bitmap_format  : 2;
+
+    /**
+     * Bytes to which each line is padded.
+     * 0: means no align and padding
+     * 1: e.g. with bpp=4 lines are aligned to 1 byte, so there can be a 4 bits of padding
+     * 4, 8, 16, 32, 64: each line is padded to the given byte boundaries
+     */
+    uint8_t stride;
+} lv_font_fmt_txt_dsc_t;
+
+/** The font format.*/
+typedef enum {
+    LV_FONT_GLYPH_FORMAT_NONE   = 0, /**< Maybe not visible*/
+
+    /**< Legacy simple formats*/
+    LV_FONT_GLYPH_FORMAT_A1     = 0x01, /**< 1 bit per pixel*/
+    LV_FONT_GLYPH_FORMAT_A2     = 0x02, /**< 2 bit per pixel*/
+    LV_FONT_GLYPH_FORMAT_A3     = 0x03, /**< 3 bit per pixel*/
+    LV_FONT_GLYPH_FORMAT_A4     = 0x04, /**< 4 bit per pixel*/
+    LV_FONT_GLYPH_FORMAT_A8     = 0x08, /**< 8 bit per pixel*/
+
+    LV_FONT_GLYPH_FORMAT_IMAGE  = 0x19, /**< Image format*/
+
+    /**< Advanced formats*/
+    LV_FONT_GLYPH_FORMAT_VECTOR = 0x1A, /**< Vectorial format*/
+    LV_FONT_GLYPH_FORMAT_SVG    = 0x1B, /**< SVG format*/
+    LV_FONT_GLYPH_FORMAT_CUSTOM = 0xFF, /**< Custom format*/
+} lv_font_glyph_format_t;
+
+/** Describes the properties of a glyph.*/
+typedef struct {
+    const lv_font_t *
+    resolved_font;  /**< Pointer to a font where the glyph was actually found after handling fallbacks*/
+    uint16_t adv_w; /**< The glyph needs this space. Draw the next glyph after this width.*/
+    uint16_t box_w; /**< Width of the glyph's bounding box*/
+    uint16_t box_h; /**< Height of the glyph's bounding box*/
+    int16_t ofs_x;  /**< x offset of the bounding box*/
+    int16_t ofs_y;  /**< y offset of the bounding box*/
+    uint16_t stride;/**< Bytes in each line. If 0 than there is no padding at the end of the line. */
+    lv_font_glyph_format_t format;  /**< Font format of the glyph see lv_font_glyph_format_t */
+    uint8_t is_placeholder: 1;      /**< Glyph is missing. But placeholder will still be displayed*/
+
+    /** 0: Get bitmap should return an A8 or ARGB8888 image.
+      * 1: return the bitmap as it is (Maybe A1/2/4 or any proprietary formats). */
+    uint8_t req_raw_bitmap: 1;
+
+    int32_t outline_stroke_width;   /**< used with freetype vector fonts - width of the letter border */
+
+    union {
+        uint32_t index;       /**< Glyph descriptor index*/
+        const void * src;     /**< Pointer to the source data used by image fonts*/
+    } gid;                    /**< The index of the glyph in the font file. Used by the font cache*/
+    lv_cache_entry_t * entry; /**< The cache entry of the glyph draw data. Used by the font cache*/
+} lv_font_glyph_dsc_t;
+
+struct _lv_font_t {
+    /** Get a glyph's descriptor from a font*/
+    bool (*get_glyph_dsc)(const lv_font_t *, lv_font_glyph_dsc_t *, uint32_t letter, uint32_t letter_next);
+
+    /** Get a glyph's bitmap from a font*/
+    const void * (*get_glyph_bitmap)(lv_font_glyph_dsc_t *, lv_draw_buf_t *);
+
+    /** Release a glyph*/
+    void (*release_glyph)(const lv_font_t *, lv_font_glyph_dsc_t *);
+
+    /*Pointer to the font in a font pack (must have the same line height)*/
+    int32_t line_height;         /**< The real line height where any text fits*/
+    int32_t base_line;           /**< Base line measured from the bottom of the line_height*/
+    uint8_t subpx   : 2;            /**< An element of `lv_font_subpx_t`*/
+    uint8_t kerning : 1;            /**< An element of `lv_font_kerning_t`*/
+    uint8_t static_bitmap : 1;      /**< The font will be used as static bitmap */
+
+    int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
+    int8_t underline_thickness;     /**< Thickness of the underline*/
+
+    const void * dsc;               /**< Store implementation specific or run_time data or caching here*/
+    const lv_font_t * fallback;     /**< Fallback font for missing glyph. Resolved recursively */
+    void * user_data;               /**< Custom user data for font.*/
+};
+
+
+typedef struct{
+
+    /*Pointer to the font in a font pack (must have the same line height)*/
+    int32_t line_height;         /**< The real line height where any text fits*/
+    int32_t base_line;           /**< Base line measured from the bottom of the line_height*/
+        /** The bitmaps of all glyphs */
+    const uint8_t * glyph_bitmap;
+
+    /** Describe the glyphs */
+    const lv_font_fmt_txt_glyph_dsc_t * glyph_dsc;
+
+    /** Map the glyphs to Unicode characters.
+     *Array of `lv_font_cmap_fmt_txt_t` variables */
+    const lv_font_fmt_txt_cmap_t * cmaps;
+
+    /** Number of cmap tables */
+    uint16_t cmap_num       : 9;
+
+    /** Bit per pixel: 1, 2, 3, 4, 8 */
+    uint16_t bpp            : 4;
+} font_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -459,6 +652,9 @@ typedef struct _lv_draw_eve_unit_t lv_draw_eve_unit_t;
 #ifndef LV_ARRAYLEN
 #define LV_ARRAYLEN(a) (sizeof(a)/sizeof((a)[0]))
 #endif /*LV_ARRAYLEN*/
+
+extern const uint8_t glyph_bitmap[];
+extern const font_t lv_font_montserrat_20;
 
 #ifdef __cplusplus
 } /*extern "C"*/

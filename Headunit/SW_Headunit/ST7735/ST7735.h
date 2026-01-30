@@ -77,9 +77,9 @@
 #define ST77XX_RDID4 0xDD
 
 
-extern SPI_HandleTypeDef *ST7735_SPI;
-extern uint8_t st7735_buffer[ST7735_BUFFER];
-extern uint32_t st7735_pallete[16];
+//extern SPI_HandleTypeDef *ST7735_SPI;
+//extern uint8_t st7735_buffer[ST7735_BUFFER];
+//extern uint32_t st7735_pallete[16];
 
 void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs);
 void sendCommand(uint8_t cmd);
@@ -87,18 +87,16 @@ void redraw(void);
 
 void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
 void setRotation(uint8_t r);
+
 void enableDisplay(bool enable);
 void enableTearing(bool enable);
 void enableSleep(bool enable);
 void enableInvert(bool enable);
 
-//void begin(uint32_t freq = 0);
-void commonInit(const uint8_t *cmdList);
-void displayInit(const uint8_t *addr);
+void ST77XX_sendInitSequence(const uint8_t *addr);
 void setColRowStart(int8_t col, int8_t row);
-//static const uint8_t Bcmd[];
+uint8_t * getBufferPointer(void);
 
-void initB(void);                             // for ST7735B displays
 void initR(SPI_HandleTypeDef *hspi);          // for ST7735R
 
 void setRotation(uint8_t m);
