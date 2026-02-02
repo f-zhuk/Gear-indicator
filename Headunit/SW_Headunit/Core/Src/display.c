@@ -77,7 +77,7 @@ void putChar(uint8_t character)
             j = -xstart;
         while (j<box_w)
         {
-            uint8_t nibble = (bm[bmi+((i*font.glyph_dsc[character].box_w+j)>>1)] >> ((~(i*font.glyph_dsc[character].box_w+j)&0x01)<<2));
+            uint8_t nibble = (bm[bmi+((i*font.glyph_dsc[character].box_w+j)>>1)] >> ((~(i*font.glyph_dsc[character].box_w+j)&0x01)<<2)) & 0x0F;
             if(nibble)
             {
                 uint16_t wbi = ((display.width)*(i+ystart)+xstart+j); // Working buffer index
