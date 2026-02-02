@@ -100,16 +100,49 @@ int main(void)
   displayInit(getBufferPointer(), ST7735_WIDTH>>1, ST7735_HEIGHT>>1);
   enableDisplay(false);
   enableInvert(true);
-  setCursor(15,25);
+  setCursor(-1,-1);
+  fillRectangle(42,82,0x01);
+  setCursor(-1,10);
+  putChar('W');
+  putChar('W');
+  setCursor(2,53);
   putChar('3');
-  setCursor(14,75);
-  putChar('8');
+  putChar('5');
+  setCursor(2,73);
+  putChar('!');
+  putChar('!');
+  putChar('3');
+  putChar('5');
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t i=0;
+  
+  setCursor(2,2);
   while (1)
   {
+    setCursor(0,15);
+    fillRectangle(40,25,0x00);
+    setCursor(-i,33);
+    putChar('1');
+    putChar('2');
+    putChar('3');
+    putChar('4');
+    putChar('5');
+    putChar('6');
+    putChar('7');
+    putChar('8');
+    putChar('9');
+    putChar('!');
+    
+    setCursor(30,50);
+    fillRectangle(5,5,i);
+    i++;
+    if (i%15 == 0)
+      setCursor(2,2);
+    
+
     redraw();
     enableDisplay(true);
     HAL_Delay(100);
