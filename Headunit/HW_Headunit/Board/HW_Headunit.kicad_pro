@@ -490,7 +490,7 @@
       "plot": "",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "HW_Headunit.step",
+      "step": "../Case/HW_Headunit.step",
       "svg": "",
       "vrml": ""
     },

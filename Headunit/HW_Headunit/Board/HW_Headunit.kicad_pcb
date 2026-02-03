@@ -1010,7 +1010,7 @@
 	(footprint "USER:XB-PJ-1837"
 		(layer "B.Cu")
 		(uuid "2e8b8f35-f12d-42b1-b423-e2a77b20f278")
-		(at 0 -7 -90)
+		(at 0 -7.5 -90)
 		(descr "TRS 3.5mm, horizontal, through-hole, https://www.cuidevices.com/product/resource/pdf/sj1-352xn.pdf")
 		(tags "TRS audio jack stereo horizontal")
 		(property "Reference" "J2"
@@ -1352,7 +1352,7 @@
 	(footprint "USER:XB-PJ-1837"
 		(layer "B.Cu")
 		(uuid "9183cc73-1b06-4a95-a94c-72e24d380a9c")
-		(at 0 7 -90)
+		(at 0 7.5 -90)
 		(descr "TRS 3.5mm, horizontal, through-hole, https://www.cuidevices.com/product/resource/pdf/sj1-352xn.pdf")
 		(tags "TRS audio jack stereo horizontal")
 		(property "Reference" "J1"
@@ -1692,8 +1692,8 @@
 		)
 	)
 	(gr_line
-		(start 14 -14)
-		(end 27 -14)
+		(start 14.000001 -15)
+		(end 27.000001 -15)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1702,8 +1702,8 @@
 		(uuid "04d8ab6a-84db-4eb3-a80d-2b088af01fe7")
 	)
 	(gr_line
-		(start 0 12)
-		(end 0 15)
+		(start 0 12.5)
+		(end 0 16)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1712,9 +1712,9 @@
 		(uuid "11dd9ea7-860e-4494-b463-07b0fd097637")
 	)
 	(gr_arc
-		(start 13 15)
-		(mid 13.292893 14.292893)
-		(end 14 14)
+		(start 13 16)
+		(mid 13.292893 15.292893)
+		(end 14 15)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1723,8 +1723,8 @@
 		(uuid "28fcf615-7ff8-4834-a0a1-5a1e32e28d0d")
 	)
 	(gr_line
-		(start 0 -12)
-		(end 0 -15)
+		(start 0 -12.5)
+		(end 0 -16)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1733,8 +1733,8 @@
 		(uuid "2afe5c9d-8c36-4dbb-8699-c2bd7293ce85")
 	)
 	(gr_line
-		(start 27 14)
-		(end 27 -14)
+		(start 27 15)
+		(end 27.000001 -15)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1743,8 +1743,8 @@
 		(uuid "2d77c317-5879-4987-892d-3ae2750a1df6")
 	)
 	(gr_line
-		(start 14 14)
-		(end 27 14)
+		(start 14 15)
+		(end 27 15)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1753,8 +1753,8 @@
 		(uuid "3192297d-c14c-42c6-8bd1-74ae3c8651bb")
 	)
 	(gr_line
-		(start 0 -15)
-		(end 13 -15)
+		(start 0 -16)
+		(end 13 -16)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1763,9 +1763,9 @@
 		(uuid "3ab4895a-fb07-4057-bc1e-e60f5ac1f87b")
 	)
 	(gr_arc
-		(start 13.999999 -14)
-		(mid 13.292893 -14.292894)
-		(end 12.999999 -15)
+		(start 14 -15)
+		(mid 13.292894 -15.292894)
+		(end 13 -16)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1774,8 +1774,8 @@
 		(uuid "52756b21-14e8-4230-a59a-07f7ec37bdea")
 	)
 	(gr_line
-		(start 0 15)
-		(end 13 15)
+		(start 0 16)
+		(end 13 16)
 		(stroke
 			(width 0.12)
 			(type solid)
@@ -1784,8 +1784,8 @@
 		(uuid "77874dce-0288-408e-b272-00b85083fca6")
 	)
 	(gr_line
-		(start 0 2)
-		(end 0 -2)
+		(start 0 2.5)
+		(end 0 -2.5)
 		(stroke
 			(width 0.12)
 			(type solid)
