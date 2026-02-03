@@ -1,0 +1,3 @@
+[submodule "Headunit/SW_Headunit/CanOpenSTM32"]
+	path = Headunit/SW_Headunit/CanOpenSTM32
+	url = https://github.com/CANopenNode/CanOpenSTM32.git
