@@ -34,7 +34,7 @@ extern "C" {
 #include <stdint.h>
 #include "ST7735.h"
 #include "display.h"
-
+#include "CO_app_STM32.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
