@@ -134,7 +134,7 @@ int main(void)
   {
     canopen_app_process();
 
-    setCursor(0,15);
+    /*setCursor(0,15);
     fillRectangle(40,25,0x00);
     setCursor(-i,33);
     putChar('1');
@@ -158,7 +158,7 @@ int main(void)
     redraw();
     enableDisplay(true);
     HAL_Delay(10);
-
+    */
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     /* USER CODE END WHILE */
 

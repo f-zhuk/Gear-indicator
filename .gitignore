@@ -7,3 +7,4 @@
 *.lst
 *.o
 /Headunit/GI_Headunit/build
+/Gearunit/SW_Gearunit/CanOpenSTM32
