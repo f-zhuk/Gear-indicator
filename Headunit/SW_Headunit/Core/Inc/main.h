@@ -31,10 +31,18 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdint.h>
-#include "ST7735.h"
-#include "display.h"
-#include "CO_app_STM32.h"
+//#include <stdint.h>
+//#include <stdbool.h>
+//typedef uint_fast8_t bool_t;
+//typedef float float32_t;
+//typedef double float64_t;
+
+//#include "CANopen.h"
+//#include "CO_driver_target.h"
+//#include "CO_driver.h"
+//#include "CO_app_STM32.h"
+//#include "ST7735.h"
+//#include "display.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
