@@ -119,19 +119,27 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t AnalogueInput8_1 = 0;
+  uint16_t AnalogueInput8_1 = 0;
   uint8_t AnalogueInput8_1_last = 0;
-  uint8_t AnalogueInput8_2 = 0;
+  uint16_t AnalogueInput8_2 = 0;
   uint8_t AnalogueInput8_2_last = 0;
   while (1)
   {
     canopen_app_process();
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_Start(&hadc2);
-    HAL_ADC_PollForConversion(&hadc1,100);
-    AnalogueInput8_1 = HAL_ADC_GetValue(&hadc1)>>5;
-    HAL_ADC_PollForConversion(&hadc2,100);
-    AnalogueInput8_2 = HAL_ADC_GetValue(&hadc2)>>5;
+
+    for(uint8_t i = 0; i<16; i++)
+    {
+      HAL_ADC_Start(&hadc1);
+      HAL_ADC_PollForConversion(&hadc1,100);
+      AnalogueInput8_1 += HAL_ADC_GetValue(&hadc1);
+
+      HAL_ADC_Start(&hadc2);
+      HAL_ADC_PollForConversion(&hadc2,100);
+      AnalogueInput8_2 += HAL_ADC_GetValue(&hadc2);
+    }
+
+    AnalogueInput8_1 = AnalogueInput8_1>>8;
+    AnalogueInput8_2 = AnalogueInput8_2>>8;
 
     if((AnalogueInput8_1 != AnalogueInput8_1_last) || (AnalogueInput8_2 != AnalogueInput8_2_last))
     {
