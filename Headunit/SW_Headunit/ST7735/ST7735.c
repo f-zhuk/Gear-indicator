@@ -4,8 +4,6 @@
 
 #include "main.h"
 
-#define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
-
 enum ST7735_STATE_ENUM // арифметическая операция
 {
   ST7735_IDLE,
@@ -14,7 +12,7 @@ enum ST7735_STATE_ENUM // арифметическая операция
 
 uint8_t _st7735_state = ST7735_IDLE;
 uint8_t _colstart = 0;   ///< Some displays need this changed to offset
-uint8_t _rowstart = 0;       ///< Some displays need this changed to offset
+uint8_t _rowstart = 0;   ///< Some displays need this changed to offset
 uint8_t _xstart = 0;
 uint8_t _ystart = 0;
 uint8_t _height = 0;
@@ -22,24 +20,24 @@ uint8_t _width = 0;
 
 // Regular grayscale
 //const 
-uint32_t st7735_pallete[16] = 
+uint16_t st7735_pallete[16] = 
 {
-  0x000000,
-  0x111111,
-  0x222222,
-  0x333333,
-  0x444444,
-  0x555555,
-  0x666666,
-  0x777777,
-  0x888888,
-  0x999999,
-  0xAAAAAA,
-  0xBBBBBB,
-  0xCCCCCC,
-  0xDDDDDD,
-  0xEEEEEE,
-  0xFFFFFF,
+  0x0000,
+  0x0111,
+  0x0222,
+  0x0333,
+  0x0444,
+  0x0555,
+  0x0666,
+  0x0777,
+  0x0888,
+  0x0999,
+  0x0AAA,
+  0x0BBB,
+  0x0CCC,
+  0x0DDD,
+  0x0EEE,
+  0x0FFF,
 };
 
 uint8_t st7735_buffer[ST7735_BUFFER];
@@ -119,8 +117,8 @@ static const uint8_t Rcmd3[] = {                       // 7735R init, part 3 (re
 
 void sendCallback(SPI_HandleTypeDef *hspi)
 {
-  static uint8_t st7735_linebuffer[ST7735_WIDTH*3/2];
   static uint16_t start = 0;
+  uint8_t st7735_linebuffer[ST7735_WIDTH*3/2];
   uint8_t column = 0;
   uint32_t color = 0;
 
@@ -132,24 +130,18 @@ void sendCallback(SPI_HandleTypeDef *hspi)
   }
 
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
-  while(column<(ST7735_WIDTH>>2))
+  while(column<ST7735_WIDTH) // Going through every pixel horizontally 
   {
-    color = st7735_pallete[(st7735_buffer[start+column]>>4)&0x0F];
-    for (uint8_t i=0; i<3; i++)
-    {
-      st7735_linebuffer[(column*6)+i] = (color>>(8*i))&0xFF;
-    }
-    color = st7735_pallete[st7735_buffer[start+column]&0x0F];
-    for (uint8_t i=0; i<3; i++)
-    {
-      st7735_linebuffer[(column*6)+3+i] = (color>>(8*i))&0xFF;
-    }
+    color = st7735_pallete[(st7735_buffer[start+(column>>1)]>>((~column&1)<<2))&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
+    st7735_linebuffer[(column*3)>>1] &= 0xF000>>(4+((column&1)<<2)); // >>4 for even, >>8 for odd
+    st7735_linebuffer[(column*3)>>1] |= color>>(4+((column&1)<<2));
+    st7735_linebuffer[((column*3)>>1)+1] &= 0xF000>>(4-((column&1)<<2)); // <<4 for even, <<0 for odd
+    st7735_linebuffer[((column*3)>>1)+1] |= color>>(4-((column&1)<<2));
     column++;
   }
-  HAL_SPI_Transmit(hspi, st7735_linebuffer, (ST7735_WIDTH*3/2), 1000);
   HAL_SPI_Transmit_IT(hspi, st7735_linebuffer, (ST7735_WIDTH*3/2));
-    
-  start += column;
+  
+  start += column>>1;
 }
 
 void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs)

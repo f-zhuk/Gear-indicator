@@ -107,7 +107,7 @@ int main(void)
   canopen_app_init(&canOpenNodeSTM32);
 
   initR(&hspi1);
-  displayInit(getBufferPointer(), ST7735_WIDTH>>1, ST7735_HEIGHT>>1);
+  displayInit(getBufferPointer(), ST7735_WIDTH, ST7735_HEIGHT);
   enableDisplay(false);
   enableInvert(true);
   setCursor(-1,-1);
@@ -123,6 +123,7 @@ int main(void)
   putChar('!');
   putChar('3');
   putChar('5');
+  enableDisplay(true);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -135,7 +136,7 @@ int main(void)
     canopen_app_process();
 
     setCursor(0,15);
-    fillRectangle(40,25,0x00);
+    fillRectangle(80,25,0x00);
     setCursor(-i,33);
     putChar('1');
     putChar('2');
@@ -156,7 +157,7 @@ int main(void)
     
 
     redraw();
-    enableDisplay(true);
+    //enableDisplay(true);
     HAL_Delay(10);
     
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);

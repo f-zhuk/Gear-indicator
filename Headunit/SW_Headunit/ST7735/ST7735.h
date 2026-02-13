@@ -34,7 +34,7 @@
 #define ST7735_YOFFSET 1
 #define ST7735_WIDTH 80
 #define ST7735_HEIGHT 160
-#define ST7735_BUFFER (ST7735_WIDTH/2)*(ST7735_HEIGHT/2)/2
+#define ST7735_BUFFER (ST7735_WIDTH*ST7735_HEIGHT)/2
 
 #define ST_CMD_DELAY 0x80 // special signifier for command lists
 
