@@ -32,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CAN_TIMEOUT_VALUE 1000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,7 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-ADC_HandleTypeDef hadc2;
+DMA_HandleTypeDef hdma_adc1;
 
 CAN_HandleTypeDef hcan;
 
@@ -55,10 +55,11 @@ TIM_HandleTypeDef htim4;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_CAN_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_ADC2_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,6 +82,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  uint16_t AnalogueInput8_buffer[2] = {0,0};
+  uint16_t AnalogueInput8[2] = {0,0};
+  uint16_t AnalogueInput8_last[2] = {0,0};
 
   /* USER CODE END 1 */
 
@@ -96,62 +100,50 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_CAN1EN);
+  CLEAR_BIT(CAN1->MCR, CAN_MCR_SLEEP); //CH32F103C8T6 needs to exit sleep first, it can be configured only after exiting sleep (Normal STM does not need this)
+  //HAL_Delay(100);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_CAN_Init();
   MX_TIM4_Init();
   MX_ADC1_Init();
-  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
   CANopenNodeSTM32 canOpenNodeSTM32;
   canOpenNodeSTM32.CANHandle = &hcan;
   canOpenNodeSTM32.HWInitFunction = MX_CAN_Init;
   canOpenNodeSTM32.timerHandle = &htim4;
-  canOpenNodeSTM32.desiredNodeID = 29;
+  canOpenNodeSTM32.desiredNodeID = 4;
   canOpenNodeSTM32.baudrate = 125;
   canopen_app_init(&canOpenNodeSTM32);
   HAL_ADCEx_Calibration_Start(&hadc1);
-  HAL_ADCEx_Calibration_Start(&hadc2);
+  HAL_ADC_Start_DMA(&hadc1,(uint32_t*)&AnalogueInput8_buffer, 4); 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t AnalogueInput8_1 = 0;
-  uint8_t AnalogueInput8_1_last = 0;
-  uint16_t AnalogueInput8_2 = 0;
-  uint8_t AnalogueInput8_2_last = 0;
   while (1)
   {
     canopen_app_process();
 
-    for(uint8_t i = 0; i<16; i++)
+    AnalogueInput8[1] = AnalogueInput8_buffer[1]>>4;
+    AnalogueInput8[2] = AnalogueInput8_buffer[2]>>4;
+
+    
+    if((AnalogueInput8[1] != AnalogueInput8_last[1]) || (AnalogueInput8[2] != AnalogueInput8_last[2]))
     {
-      HAL_ADC_Start(&hadc1);
-      HAL_ADC_PollForConversion(&hadc1,100);
-      AnalogueInput8_1 += HAL_ADC_GetValue(&hadc1);
-
-      HAL_ADC_Start(&hadc2);
-      HAL_ADC_PollForConversion(&hadc2,100);
-      AnalogueInput8_2 += HAL_ADC_GetValue(&hadc2);
-    }
-
-    AnalogueInput8_1 = AnalogueInput8_1>>8;
-    AnalogueInput8_2 = AnalogueInput8_2>>8;
-
-    if((AnalogueInput8_1 != AnalogueInput8_1_last) || (AnalogueInput8_2 != AnalogueInput8_2_last))
-    {
-      if(AnalogueInput8_1 != AnalogueInput8_1_last) 
+      if(AnalogueInput8[1] != AnalogueInput8_last[1]) 
       {
-        AnalogueInput8_1_last = AnalogueInput8_1;
-        OD_set_u8(OD_find(OD,0x6400), 0x01, AnalogueInput8_1_last, false);
+        AnalogueInput8_last[1] = AnalogueInput8[1];
+        OD_set_u8(OD_find(OD,0x6400), 0x01, AnalogueInput8_last[1], false);
       }
-      if(AnalogueInput8_2 != AnalogueInput8_2_last) 
+      if(AnalogueInput8[2] != AnalogueInput8_last[2]) 
       {
-        AnalogueInput8_2_last = AnalogueInput8_2;
-        OD_set_u8(OD_find(OD,0x6400), 0x02, AnalogueInput8_2_last, false);
+        AnalogueInput8_last[2] = AnalogueInput8[2];
+        OD_set_u8(OD_find(OD,0x6400), 0x02, AnalogueInput8_last[2], false);
       }
       CO_TPDOsendRequest(&canOpenNodeSTM32.canOpenStack->TPDO[0]);
     }
@@ -232,12 +224,12 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 2;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -252,56 +244,17 @@ static void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN ADC1_Init 2 */
-
-  /* USER CODE END ADC1_Init 2 */
-
-}
-
-/**
-  * @brief ADC2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC2_Init(void)
-{
-
-  /* USER CODE BEGIN ADC2_Init 0 */
-
-  /* USER CODE END ADC2_Init 0 */
-
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  /* USER CODE BEGIN ADC2_Init 1 */
-
-  /* USER CODE END ADC2_Init 1 */
-
-  /** Common config
-  */
-  hadc2.Instance = ADC2;
-  hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc2.Init.ContinuousConvMode = DISABLE;
-  hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
-  if (HAL_ADC_Init(&hadc2) != HAL_OK)
-  {
-    Error_Handler();
-  }
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN ADC2_Init 2 */
+  /* USER CODE BEGIN ADC1_Init 2 */
 
-  /* USER CODE END ADC2_Init 2 */
+  /* USER CODE END ADC1_Init 2 */
 
 }
 
@@ -401,6 +354,22 @@ static void MX_TIM4_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -447,6 +416,9 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+    HAL_Delay(1000);
+    
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
   }
   /* USER CODE END Error_Handler_Debug */
 }
