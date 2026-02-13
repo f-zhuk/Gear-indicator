@@ -78,6 +78,45 @@ void putChar(uint8_t character)
         while (j<box_w)
         {
             uint8_t nibble = (bm[bmi+((i*font.glyph_dsc[character].box_w+j)>>1)] >> ((~(i*font.glyph_dsc[character].box_w+j)&0x01)<<2)) & 0x0F;
+            uint16_t wbi = ((display.width)*(i+ystart)+xstart+j); // Working buffer index
+            display.target_buffer[wbi>>1] &= (0x0F<<((wbi&0x01)<<2));
+            display.target_buffer[wbi>>1] |=  (nibble << ((~wbi&0x01)<<2));
+            j++;
+        }
+        i++;
+    }
+    display.xcursor = xstart+box_w+1;
+}
+
+void putCharTransparent(uint8_t character)
+{
+    font_t font = lv_font_montserrat_20;
+    uint8_t cmap = 0;
+    character -= (font.cmaps[cmap].range_start - font.cmaps[cmap].glyph_id_start);
+    uint32_t bmi = font.glyph_dsc[character].bitmap_index; //Bitmap index
+    uint8_t * bm = font.glyph_bitmap;  // Bitmap
+
+    int16_t xstart = (int16_t)display.xcursor+font.glyph_dsc[character].ofs_x;
+    int16_t ystart = (int16_t)display.ycursor+font.glyph_dsc[character].ofs_y+font.base_line-font.glyph_dsc[character].box_h;
+
+    int16_t box_w = font.glyph_dsc[character].box_w;
+    if(xstart+box_w>display.width) // Check right
+        box_w = display.width-xstart;
+    int16_t box_h = font.glyph_dsc[character].box_h;
+    if(ystart+box_h>display.height) // Check bottom
+        box_h = display.height-ystart;
+
+    uint16_t i=0;
+    if(ystart<0) // Check top
+        i = -ystart;
+    while (i<box_h)
+    {
+        uint16_t j=0;
+        if(xstart<0) // Check left
+            j = -xstart;
+        while (j<box_w)
+        {
+            uint8_t nibble = (bm[bmi+((i*font.glyph_dsc[character].box_w+j)>>1)] >> ((~(i*font.glyph_dsc[character].box_w+j)&0x01)<<2)) & 0x0F;
             if(nibble)
             {
                 uint16_t wbi = ((display.width)*(i+ystart)+xstart+j); // Working buffer index
@@ -90,7 +129,6 @@ void putChar(uint8_t character)
     }
     display.xcursor = xstart+box_w+1;
 }
-
 
 void fillRectangle(uint16_t width, uint16_t height, uint8_t color)
 {
