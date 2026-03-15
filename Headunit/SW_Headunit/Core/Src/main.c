@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "CO_app_STM32.h"
+#include "OD.h"
 #include "ST7735.h"
 #include "display.h"
 /* USER CODE END Includes */
@@ -108,10 +109,11 @@ int main(void)
 
   initR(&hspi1);
   displayInit(getBufferPointer(), ST7735_WIDTH, ST7735_HEIGHT);
+  fillRectangle(80,82,0x01);
   enableDisplay(false);
   enableInvert(true);
   setCursor(-1,-1);
-  fillRectangle(42,82,0x01);
+  //fillRectangle(42,82,0x01);
   setCursor(-1,10);
   putChar('W');
   putChar('W');
@@ -129,6 +131,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint8_t i=0;
+  uint8_t shift=0;
+  CO_NMT_t state;
   
   setCursor(2,2);
   while (1)
@@ -137,7 +141,9 @@ int main(void)
 
     setCursor(0,15);
     fillRectangle(80,25,0x00);
-    setCursor(-i,33);
+    //setCursor(-i,33);
+    OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
+    setCursor(-shift,33);
     putChar('1');
     putChar('2');
     putChar('3');
@@ -152,12 +158,15 @@ int main(void)
     setCursor(30,50);
     fillRectangle(5,5,i);
     i++;
-    if (i%15 == 0)
-      setCursor(2,2);
+    //if (i%15 == 0)
+    //  setCursor(2,2);
     
 
     redraw();
     //enableDisplay(true);
+    //CO_NMT_getInternalState(&state);
+    //if (state.)
+    //state = state;
     HAL_Delay(10);
     
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
