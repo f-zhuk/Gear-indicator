@@ -64,7 +64,15 @@ static void MX_TIM4_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
-
+/* USER CODE BEGIN 0 */
+/* Timer interrupt function executes every 1 ms */
+void
+HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
+    if (htim == canopenNodeSTM32->timerHandle) {
+        canopen_app_interrupt();
+    }
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+}
 /* USER CODE END 0 */
 
 /**
@@ -109,14 +117,14 @@ int main(void)
 
   initR(&hspi1);
   displayInit(getBufferPointer(), ST7735_WIDTH, ST7735_HEIGHT);
-  fillRectangle(80,82,0x01);
   enableDisplay(false);
   enableInvert(true);
+  fillRectangle(80,82,0x01);
   setCursor(-1,-1);
   //fillRectangle(42,82,0x01);
-  setCursor(-1,10);
-  putChar('W');
-  putChar('W');
+  //setCursor(-1,10);
+  //putChar('W');
+  //putChar('W');
   setCursor(2,53);
   putChar('3');
   putChar('5');
@@ -125,6 +133,7 @@ int main(void)
   putChar('!');
   putChar('3');
   putChar('5');
+  redraw();
   enableDisplay(true);
   /* USER CODE END 2 */
 
@@ -132,7 +141,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t i=0;
   uint8_t shift=0;
-  CO_NMT_t state;
+  //CO_NMT_t state;
   
   setCursor(2,2);
   while (1)
@@ -155,21 +164,19 @@ int main(void)
     putChar('9');
     putChar('!');
     
-    setCursor(30,50);
-    fillRectangle(5,5,i);
-    i++;
+    //setCursor(30,50);
+    //fillRectangle(5,5,i);
+    //i++;
     //if (i%15 == 0)
     //  setCursor(2,2);
     
 
     redraw();
     //enableDisplay(true);
-    //CO_NMT_getInternalState(&state);
-    //if (state.)
-    //state = state;
     HAL_Delay(10);
     
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    //if(shift>0x80)
+    //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
