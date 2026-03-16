@@ -29,7 +29,21 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+enum DIRECTION_ENUM // арифметическая операция
+{
+  DIRECTION_UNKNOWN,
+  DIRECTION_UP,
+  DIRECTION_DOWN
+};
 
+typedef struct {
+  OD_entry_t* CAN_entry;
+  uint8_t direction;
+  //uint8_t gear;
+  uint8_t gear_total;
+  uint8_t position[16];
+  uint8_t log[32];
+} shifter_descriptor;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -50,7 +64,7 @@ SPI_HandleTypeDef hspi1;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
-
+shifter_descriptor shifter[2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,12 +80,99 @@ static void MX_TIM4_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 /* Timer interrupt function executes every 1 ms */
-void
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
-    if (htim == canopenNodeSTM32->timerHandle) {
-        canopen_app_interrupt();
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) 
+{
+  static uint16_t overflow_counter = 0; //15:12 - reserved, 11:7 - 32 samples, 6 - shifter interleave, 5:1 64ms delay
+  int16_t shift; //Needed for easier operations with boudaries
+  uint8_t sh_num;
+  if (htim == canopenNodeSTM32->timerHandle) 
+  {
+    canopen_app_interrupt();
+  }
+  //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+  overflow_counter ++;
+  if ((overflow_counter&0x3F) == 0x3F) // Triggered every 64 ms
+  {
+    sh_num = (overflow_counter>>6)&1;
+    OD_get_u8(shifter[sh_num].CAN_entry, 0x01+sh_num, (uint8_t*)&shift, false); //get shifter value
+
+    if (shift==0) // Reserved default value meaning absence of real data
+      return;
+    else if (shifter[sh_num].gear_total == 0) // Triggered only at startup to get initial valid position
+    {
+      //shifter[sh_num].gear = 1;
+      shifter[sh_num].gear_total = 1;
+      shifter[sh_num].position[1] = shift;
     }
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+    if((shifter[sh_num].gear_total != 0) && (shifter[sh_num].direction == DIRECTION_UNKNOWN)) // Only for first shift detection
+    {
+      if (shift-5 >= (shifter[sh_num].position[ 1 ]))
+        shifter[sh_num].direction = DIRECTION_UP;
+      else if (shift+5 < (shifter[sh_num].position[ 1 ]))
+        shifter[sh_num].direction = DIRECTION_DOWN;
+    }
+      
+    shifter[sh_num].log[(overflow_counter>>7)&0x0F] = shift; // Storing 16*128ms of samples
+
+      if (((overflow_counter>>7)&0x0F) == 0x0F) // When we got all 16 samples
+      {
+        int16_t min = 255;
+        int16_t max = 0;
+        for(uint8_t i = 0; i<16; i++) //searching for lowest and highhest values
+        {
+          if (shifter[sh_num].log[i] < min)
+            min = shifter[sh_num].log[i];
+          if (shifter[sh_num].log[i] > max)
+            max = shifter[sh_num].log[i];
+        }
+
+        if ((max-min)>5) // discard all if movement not finished or deviation is too high
+          return;
+
+        if (shifter[sh_num].gear_total >= 15) // discard all if max gear count per shipter reached
+          return;
+
+        if (shifter[sh_num].direction == DIRECTION_UNKNOWN) // discard all if no direction was defined yet
+          return;
+
+        if (shifter[sh_num].direction == DIRECTION_UP)
+        {
+          if ((min-5) >= shifter[sh_num].position[ shifter[sh_num].gear_total ])
+          {
+            //shifter[sh_num].gear = gear_total;
+            shifter[sh_num].gear_total += 1;
+            shifter[sh_num].position[shifter[sh_num].gear_total] = (max+min)/2;
+          }
+          else if ((max+5) < (shifter[sh_num].position[ 1 ]))
+          {
+            //shifter[sh_num].gear =1;
+            shifter[sh_num].gear_total += 1;
+            for(uint8_t i = shifter[sh_num].gear_total; i>1; i--) // moving all positions up to add one gear to the bottom 
+              shifter[sh_num].position[i] = shifter[sh_num].position[i-1];
+            shifter[sh_num].position[ 1 ] = (max+min)/2;
+          }
+        }
+
+        if (shifter[sh_num].direction == DIRECTION_DOWN)
+        {
+          if ((min-5) >= shifter[sh_num].position[ shifter[sh_num].gear_total ])
+          {
+            //shifter[sh_num].gear = gear_total;
+            shifter[sh_num].gear_total += 1;
+            for(uint8_t i = shifter[sh_num].gear_total; i>1; i--) // moving all positions up to add one gear to the bottom 
+              shifter[sh_num].position[i] = shifter[sh_num].position[i-1];
+            shifter[sh_num].position[ 1 ] = (max+min)/2;
+          }
+          else if ((max+5) < (shifter[sh_num].position[ 1 ]))
+          {
+            //shifter[sh_num].gear =1;
+            shifter[sh_num].gear_total += 1;
+            shifter[sh_num].position[shifter[sh_num].gear_total] = (max+min)/2;
+          }
+        }
+      }
+  }
 }
 /* USER CODE END 0 */
 
@@ -98,7 +199,20 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  for(uint8_t i = 0; i<2; i++)
+  {
+    shifter[i].CAN_entry = OD_find(OD,0x6001); //Same Index, different subindices
+    shifter[i].direction = DIRECTION_UNKNOWN;
+    shifter[i].gear_total = 0;
+    for(uint8_t j = 0; j<16; j++)
+    {
+      shifter[i].position[j]=0;
+    }
+    for(uint8_t j = 0; j<32; j++)
+    {
+      shifter[i].log[j]=0;
+    }
+  }
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -107,6 +221,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+
   CANopenNodeSTM32 canOpenNodeSTM32;
   canOpenNodeSTM32.CANHandle = &hcan;
   canOpenNodeSTM32.HWInitFunction = MX_CAN_Init;
@@ -121,18 +236,7 @@ int main(void)
   enableInvert(true);
   fillRectangle(80,82,0x01);
   setCursor(-1,-1);
-  //fillRectangle(42,82,0x01);
-  //setCursor(-1,10);
-  //putChar('W');
-  //putChar('W');
-  setCursor(2,53);
-  putChar('3');
-  putChar('5');
-  setCursor(2,73);
-  putChar('!');
-  putChar('!');
-  putChar('3');
-  putChar('5');
+
   redraw();
   enableDisplay(true);
   /* USER CODE END 2 */
@@ -164,9 +268,16 @@ int main(void)
     putChar('9');
     putChar('!');
     
-    //setCursor(30,50);
-    //fillRectangle(5,5,i);
-    //i++;
+    setCursor(0,55);
+    fillRectangle(80,25,0x00);
+    setCursor(10,70);
+    putChar(0x30+shifter[0].gear_total);
+    setCursor(30,70);
+    putChar(0x30+shifter[1].gear_total);
+    
+    setCursor(30,50);
+    fillRectangle(5,5,i);
+    i++;
     //if (i%15 == 0)
     //  setCursor(2,2);
     
@@ -176,7 +287,7 @@ int main(void)
     HAL_Delay(10);
     
     //if(shift>0x80)
-    //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

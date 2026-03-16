@@ -4,7 +4,7 @@
 
 #include "main.h"
 
-enum ST7735_STATE_ENUM // арифметическая операция
+enum ST7735_STATE_ENUM
 {
   ST7735_IDLE,
   ST7735_REDRAW
@@ -41,7 +41,6 @@ uint16_t st7735_pallete[16] =
 };
 
 uint8_t st7735_buffer[ST7735_BUFFER];
-uint8_t st7735_linebuffer[ST7735_WIDTH*3/2];
 
 SPI_HandleTypeDef *ST7735_SPI;
 
@@ -118,6 +117,7 @@ static const uint8_t Rcmd3[] = {                       // 7735R init, part 3 (re
 
 void sendCallback(SPI_HandleTypeDef *hspi)
 {
+  static uint8_t st7735_linebuffer[ST7735_WIDTH*3/2];
   static uint16_t start = 0;
   uint8_t column = 0;
   uint32_t color = 0;
