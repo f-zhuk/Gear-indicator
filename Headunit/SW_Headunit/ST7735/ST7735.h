@@ -79,11 +79,15 @@
 
 //extern SPI_HandleTypeDef *ST7735_SPI;
 //extern uint8_t st7735_buffer[ST7735_BUFFER];
-//extern uint32_t st7735_pallete[16];
+extern const uint16_t st7735_palette[16];
+extern const uint16_t st7735_palette_red[16];
+extern const uint16_t st7735_palette_green[16];
+extern const uint16_t st7735_palette_rgbi[16];
 
 void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs);
 void sendCommand(uint8_t cmd);
 void redraw(void);
+void redraw_partial(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t* palette);
 
 void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
 void setRotation(uint8_t r);

@@ -18,9 +18,14 @@ uint8_t _ystart = 0;
 uint8_t _height = 0;
 uint8_t _width = 0;
 
+uint8_t _redraw_xstart = 0;
+uint8_t _redraw_ystart = 0;
+uint8_t _redraw_xstop = 0;
+uint8_t _redraw_ystop = 0;
+uint16_t* _redraw_palette;
+
 // Regular grayscale
-//const 
-uint16_t st7735_pallete[16] = 
+const uint16_t st7735_palette[16] = 
 {
   0x0000,
   0x0111,
@@ -37,7 +42,86 @@ uint16_t st7735_pallete[16] =
   0x0CCC,
   0x0DDD,
   0x0EEE,
-  0x0FFF,
+  0x0FFF
+};
+
+/*const uint16_t st7735_palette_red[16] = 
+{
+  0x0000,
+  0x0100,
+  0x0210,
+  0x0311,
+  0x0411,
+  0x0511,
+  0x0521,
+  0x0621,
+  0x0721,
+  0x0822,
+  0x0822,
+  0x0932,
+  0x0A32,
+  0x0B32,
+  0x0C32,
+  0x000F//D33,
+};*/
+const uint16_t st7735_palette_red[16] = 
+{
+  0x0000,
+  0x01,
+  0x02,
+  0x03,
+  0x04,
+  0x05,
+  0x06,
+  0x07,
+  0x08,
+  0x09,
+  0x0A,
+  0x0B,
+  0x0C,
+  0x0D,
+  0x0E,
+  0x0F
+};
+
+const uint16_t st7735_palette_green[16] = 
+{
+  0x0000,
+  0x0111,
+  0x0222,
+  0x0333,
+  0x0444,
+  0x0555,
+  0x0666,
+  0x0777,
+  0x0888,
+  0x0999,
+  0x0AAA,
+  0x0BBB,
+  0x0CCC,
+  0x0DDD,
+  0x0EEE,
+  0x0FFF
+};
+
+const uint16_t st7735_palette_rgbi[16] = 
+{
+  0x0000,
+  0x000A,
+  0x00A0,
+  0x00AA,
+  0x0A00,
+  0x0A0A,
+  0x0A50,
+  0x0AAA,
+  0x0555,
+  0x055F,
+  0x05F5,
+  0x05FF,
+  0x0F55,
+  0x0F5F,
+  0x0FF5,
+  0x0FFF
 };
 
 uint8_t st7735_buffer[ST7735_BUFFER];
@@ -132,11 +216,22 @@ void sendCallback(SPI_HandleTypeDef *hspi)
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   while(column<ST7735_WIDTH) // Going through every pixel horizontally 
   {
-    color = st7735_pallete[(st7735_buffer[start+(column>>1)]>>((~column&1)<<2))&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
+    color = _redraw_palette[(st7735_buffer[start+(column>>1)]>>((~column&1)<<2))&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
     st7735_linebuffer[(column*3)>>1] &= 0xF000>>(4+((column&1)<<2)); // >>4 for even, >>8 for odd
     st7735_linebuffer[(column*3)>>1] |= color>>(4+((column&1)<<2));
     st7735_linebuffer[((column*3)>>1)+1] &= 0xF000>>(4-((column&1)<<2)); // <<4 for even, <<0 for odd
     st7735_linebuffer[((column*3)>>1)+1] |= color>>(4-((column&1)<<2));
+    /*if (~column&1)
+    {
+      st7735_linebuffer[(column*3)>>1] &= 
+      st7735_linebuffer[(column*3)>>1] |= 
+      st7735_linebuffer[((column*3)>>1)+1] &= 0xF000>>(4-((column&1)<<2)); // <<4 for even, <<0 for odd
+      st7735_linebuffer[((column*3)>>1)+1] |= color>>(4-((column&1)<<2));
+    }
+    else
+    {
+
+    }*/
     column++;
   }
   HAL_SPI_Transmit_IT(hspi, st7735_linebuffer, (ST7735_WIDTH*3/2));
@@ -170,6 +265,25 @@ void sendCommand(uint8_t cmd)
 
 void redraw(void)
 {
+  _redraw_xstart = 0;
+  _redraw_ystart = 0;
+  _redraw_xstop = _width;
+  _redraw_ystop = _height;
+  _redraw_palette = (uint16_t*)&st7735_palette;
+  uint8_t cmd = ST77XX_RAMWR;
+  HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
+  HAL_SPI_Transmit_IT(ST7735_SPI, &cmd, 1);
+  HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
+}
+
+void redraw_partial(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t* palette)
+{
+  _redraw_xstart = x;
+  _redraw_ystart = y;
+  _redraw_xstop = x+w;
+  _redraw_ystop = y+h;
+  _redraw_palette = palette;
   uint8_t cmd = ST77XX_RAMWR;
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
@@ -304,11 +418,16 @@ void initR(SPI_HandleTypeDef *hspi) {
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
   ST77XX_sendInitSequence(Rcmd1);
 
-  _height = ST7735_WIDTH;
-  _width = ST7735_HEIGHT;
+  _width = ST7735_WIDTH;
+  _height = ST7735_HEIGHT;
   ST77XX_sendInitSequence(Rcmd2green160x80);
   _colstart = 24;
   _rowstart = 0;
+
+  _redraw_xstart = 0;
+  _redraw_ystart = 0;
+  _redraw_xstop = _width;
+  _redraw_ystop = _height;
 
   ST77XX_sendInitSequence(Rcmd3);
 
