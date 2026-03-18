@@ -45,43 +45,24 @@ const uint16_t st7735_palette[16] =
   0x0FFF
 };
 
-/*const uint16_t st7735_palette_red[16] = 
-{
-  0x0000,
-  0x0100,
-  0x0210,
-  0x0311,
-  0x0411,
-  0x0511,
-  0x0521,
-  0x0621,
-  0x0721,
-  0x0822,
-  0x0822,
-  0x0932,
-  0x0A32,
-  0x0B32,
-  0x0C32,
-  0x000F//D33,
-};*/
 const uint16_t st7735_palette_red[16] = 
 {
   0x0000,
-  0x01,
-  0x02,
-  0x03,
-  0x04,
-  0x05,
-  0x06,
-  0x07,
-  0x08,
-  0x09,
-  0x0A,
-  0x0B,
-  0x0C,
-  0x0D,
-  0x0E,
-  0x0F
+  0x0100,
+  0x0200,
+  0x0300,
+  0x0400,
+  0x0500,
+  0x0600,
+  0x0700,
+  0x0800,
+  0x0811,
+  0x0911,
+  0x0A21,
+  0x0B21,
+  0x0C22,
+  0x0D22,
+  0x0E32
 };
 
 const uint16_t st7735_palette_green[16] = 
@@ -217,21 +198,19 @@ void sendCallback(SPI_HandleTypeDef *hspi)
   while(column<ST7735_WIDTH) // Going through every pixel horizontally 
   {
     color = _redraw_palette[(st7735_buffer[start+(column>>1)]>>((~column&1)<<2))&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
-    st7735_linebuffer[(column*3)>>1] &= 0xF000>>(4+((column&1)<<2)); // >>4 for even, >>8 for odd
-    st7735_linebuffer[(column*3)>>1] |= color>>(4+((column&1)<<2));
-    st7735_linebuffer[((column*3)>>1)+1] &= 0xF000>>(4-((column&1)<<2)); // <<4 for even, <<0 for odd
-    st7735_linebuffer[((column*3)>>1)+1] |= color>>(4-((column&1)<<2));
-    /*if (~column&1)
+    st7735_linebuffer[(column*3)>>1]      &= 0x0F00>>((column&1)<<2); // no shift for even, >>4 for odd
+    st7735_linebuffer[((column*3)>>1)+1]  &= 0x000F>>((column&1)<<2); // no shift for even, >>4 for odd
+
+    if (~column&1)
     {
-      st7735_linebuffer[(column*3)>>1] &= 
-      st7735_linebuffer[(column*3)>>1] |= 
-      st7735_linebuffer[((column*3)>>1)+1] &= 0xF000>>(4-((column&1)<<2)); // <<4 for even, <<0 for odd
-      st7735_linebuffer[((column*3)>>1)+1] |= color>>(4-((column&1)<<2));
+      st7735_linebuffer[(column*3)>>1]      |= color>>4;
+      st7735_linebuffer[((column*3)>>1)+1]  |= color<<4;
     }
     else
     {
-
-    }*/
+      st7735_linebuffer[(column*3)>>1]      |= color>>8;
+      st7735_linebuffer[((column*3)>>1)+1]  |= color;
+    }
     column++;
   }
   HAL_SPI_Transmit_IT(hspi, st7735_linebuffer, (ST7735_WIDTH*3/2));
@@ -432,7 +411,7 @@ void initR(SPI_HandleTypeDef *hspi) {
   ST77XX_sendInitSequence(Rcmd3);
 
   // Black tab, change MADCTL color filter
-  uint8_t data = 0xC0;
+  uint8_t data = 0xC8;
   sendCommandData(ST77XX_MADCTL, &data, 1);
 
   setRotation(0);
@@ -447,7 +426,7 @@ void initR(SPI_HandleTypeDef *hspi) {
 */
 /**************************************************************************/
 void setRotation(uint8_t m) {
-  uint8_t madctl = ST77XX_MADCTL_RGB;
+  uint8_t madctl = ST7735_MADCTL_BGR;
 
   uint8_t rotation = m & 3; // can't be higher than 3
 

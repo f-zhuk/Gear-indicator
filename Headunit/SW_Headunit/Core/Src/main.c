@@ -246,7 +246,7 @@ int main(void)
   uint8_t i=0;
   uint8_t shift=0;
   //CO_NMT_t state;
-  
+
   setCursor(2,2);
   while (1)
   {
@@ -257,16 +257,16 @@ int main(void)
     //setCursor(-i,33);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
     setCursor(-shift,32);
-    //putChar('1');
-    //putChar('2');
-    //putChar('3');
-    //putChar('4');
-    //putChar('5');
-    //putChar('6');
-    //putChar('7');
-    //putChar('8');
-    //putChar('9');
-    putChar('!');
+    putChar('1');
+    putChar('2');
+    putChar('3');
+    putChar('4');
+    putChar('5');
+    putChar('6');
+    putChar('7');
+    putChar('8');
+    putChar('9');
+    //putChar('!');
     
     setCursor(0,55);
     fillRectangle(80,25,0x00);
@@ -275,7 +275,7 @@ int main(void)
     setCursor(30,70);
     putChar(0x30+shifter[1].gear_total);
     
-    setCursor(0,0);
+    /*setCursor(0,0);
     fillRectangle(80,10,0x00);
     setCursor(0,10);
     fillRectangle(80,10,0x01);
@@ -306,7 +306,7 @@ int main(void)
     setCursor(0,140);
     fillRectangle(80,10,0x0E);
     setCursor(0,150);
-    fillRectangle(80,10,0x0F);
+    fillRectangle(80,10,0x0F);s*/
     //fillRectangle(20,2,i);
     i++;
     //if (i%15 == 0)
@@ -314,7 +314,7 @@ int main(void)
     
 
     //redraw();
-    redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
+    redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
     //redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
     //enableDisplay(true);
     HAL_Delay(10);
