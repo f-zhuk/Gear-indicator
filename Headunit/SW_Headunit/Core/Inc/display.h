@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "fonts.h"
+#include "../../Fonts/fonts.h"
 
 /*********************
  *      DEFINES
@@ -36,7 +36,8 @@ typedef struct {
  **********************/
 
 void setCursor(float x, float y);
-void putChar(uint8_t character);//, font_t font);
+void putChar(uint8_t character, font_t font);
+void putCharTransparent(uint8_t character);
 void fillRectangle(uint16_t width, uint16_t height, uint8_t color);
 void displayInit(uint8_t * target_buffer, uint16_t width, uint16_t height);
 

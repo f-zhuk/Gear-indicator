@@ -25,6 +25,7 @@
 #include "OD.h"
 #include "ST7735.h"
 #include "display.h"
+#include "fonts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +34,6 @@ enum DIRECTION_ENUM // арифметическая операция
 {
   DIRECTION_UNKNOWN,
   DIRECTION_UP,
-#include "fonts.h"
   DIRECTION_DOWN
 };
 
@@ -258,7 +258,8 @@ int main(void)
     //setCursor(-i,33);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
     setCursor(-shift,32);
-    putChar('1');//, lv_font_montserrat_20);
+    //putCharTransparent('1');
+    putChar('1', lv_font_montserrat_40);
     //putChar('2');
     //putChar('3');
     //putChar('4');

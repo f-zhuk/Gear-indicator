@@ -49,9 +49,9 @@ void setCursor(float x, float y)
     display.ycursor = y;
 }
 
-void putChar(uint8_t character)//, font_t font)
+void putChar(uint8_t character, font_t font)
 {
-    font_t font = lv_font_montserrat_20;
+    //font_t font = lv_font_montserrat_20;
     uint8_t cmap = 0;
     character -= (font.cmaps[cmap].range_start - font.cmaps[cmap].glyph_id_start);
     uint32_t bmi = font.glyph_dsc[character].bitmap_index; //Bitmap index
@@ -90,7 +90,7 @@ void putChar(uint8_t character)//, font_t font)
 
 void putCharTransparent(uint8_t character)
 {
-    font_t font = lv_font_montserrat_20;
+    font_t font = lv_font_montserrat_40;
     uint8_t cmap = 0;
     character -= (font.cmaps[cmap].range_start - font.cmaps[cmap].glyph_id_start);
     uint32_t bmi = font.glyph_dsc[character].bitmap_index; //Bitmap index

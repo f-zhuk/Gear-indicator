@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 /*#include "../lv_conf_internal.h"*/
-#include "display.h"
+//#include "display.h"
 
 /*********************
  *      DEFINES
@@ -606,7 +606,6 @@ typedef struct{
 /**********************
  *      MACROS
  **********************/
-extern const font_t lv_font_montserrat_20;
 
 
 #define LV_UNUSED(x) ((void)x)
@@ -656,7 +655,8 @@ extern const font_t lv_font_montserrat_20;
 #endif /*LV_ARRAYLEN*/
 
 extern const uint8_t glyph_bitmap[];
-extern const font_t lv_font_montserrat_20;
+//extern const font_t lv_font_montserrat_20;
+extern /*const*/ font_t lv_font_montserrat_40;
 
 #ifdef __cplusplus
 } /*extern "C"*/

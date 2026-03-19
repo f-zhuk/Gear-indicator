@@ -15,6 +15,7 @@
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 #include "fonts.h"
 
 #if LV_FONT_MONTSERRAT_20
@@ -24,7 +25,7 @@
  *----------------*/
 
 /*Store the image of the glyphs*/
-const uint8_t glyph_bitmap[] = {
+const uint8_t glyph_bitmap_montserrat_20[] = {
     /* U+0020 " " */
 
     /* U+0021 "!" */
@@ -1102,7 +1103,7 @@ const uint8_t glyph_bitmap[] = {
  *  GLYPH DESCRIPTION
  *--------------------*/
 
-static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
+static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc_montserrat_20[] = {
     {.bitmap_index = 0, .adv_w = 0, .box_w = 0, .box_h = 0, .ofs_x = 0, .ofs_y = 0} /* id = 0 reserved */,
     {.bitmap_index = 0, .adv_w = 86, .box_w = 0, .box_h = 0, .ofs_x = 0, .ofs_y = 0},
     {.bitmap_index = 0, .adv_w = 86, .box_w = 3, .box_h = 14, .ofs_x = 1, .ofs_y = 0},
@@ -1281,11 +1282,13 @@ static const lv_font_fmt_txt_cmap_t cmaps[] = {
  *----------------*/
 
 /*Initialize a public general font descriptor*/
-const font_t lv_font_montserrat_20 = {
+//const 
+font_t lv_font_montserrat_20 = 
+{
     .line_height = 22,          /*The maximum line height required by the font*/
     .base_line = 4,             /*Baseline measured from the bottom of the line*/
-    .glyph_bitmap = glyph_bitmap,
-    .glyph_dsc = glyph_dsc,
+    .glyph_bitmap = glyph_bitmap_montserrat_20,
+    .glyph_dsc = glyph_dsc_montserrat_20,
     .cmaps = cmaps,
     .cmap_num = 1
 };

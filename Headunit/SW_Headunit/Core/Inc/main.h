@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "fonts.h"
+//#include "fonts.h"
 //#include <stdint.h>
 //#include <stdbool.h>
 //typedef uint_fast8_t bool_t;
