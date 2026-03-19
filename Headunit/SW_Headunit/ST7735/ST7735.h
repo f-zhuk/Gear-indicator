@@ -79,6 +79,7 @@
 
 //extern SPI_HandleTypeDef *ST7735_SPI;
 //extern uint8_t st7735_buffer[ST7735_BUFFER];
+extern bool redraw_busy;
 extern const uint16_t st7735_palette[16];
 extern const uint16_t st7735_palette_red[16];
 extern const uint16_t st7735_palette_green[16];

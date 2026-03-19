@@ -15,7 +15,7 @@
 #endif
 
 #include <stdint.h>
-#include "lv_font_montserrat_20.h"
+#include "fonts.h"
 
 #if LV_FONT_MONTSERRAT_20
 

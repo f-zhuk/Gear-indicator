@@ -18,6 +18,7 @@ uint8_t _ystart = 0;
 uint8_t _height = 0;
 uint8_t _width = 0;
 
+bool redraw_busy = false;
 uint8_t _redraw_xstart = 0;
 uint8_t _redraw_ystart = 0;
 uint8_t _redraw_xstop = 0;
@@ -111,12 +112,6 @@ SPI_HandleTypeDef *ST7735_SPI;
 
 // SCREEN INITIALIZATION ***************************************************
 
-// Rather than a bazillion writecommand() and writedata() calls, screen
-// initialization commands and arguments are organized in these tables
-// stored in PROGMEM.  The table may look bulky, but that's mostly the
-// formatting -- storage-wise this is hundreds of bytes more compact
-// than the equivalent code.  Companion function follows.
-
 static const uint8_t Rcmd1[] = {                       // 7735R init, part 1 (red or green tab)
     15,                             // 15 commands in list:
     ST77XX_SWRESET,   ST_CMD_DELAY, //  1: Software reset, 0 args, w/delay
@@ -183,39 +178,57 @@ static const uint8_t Rcmd3[] = {                       // 7735R init, part 3 (re
 void sendCallback(SPI_HandleTypeDef *hspi)
 {
   static uint8_t st7735_linebuffer[ST7735_WIDTH*3/2];
-  static uint16_t start = 0;
-  uint8_t column = 0;
-  uint32_t color = 0;
+  static uint8_t column = 0;
+  static uint8_t line = 0;
+  static uint16_t bitcounter = 0;
+  uint16_t color = 0;
 
-  if(start >= ST7735_BUFFER)
+  if(line > _redraw_ystop)
   {
-    start = 0;
+    line = 0;
+    column = 0;
+    bitcounter = 0;
     HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_SET);
+    redraw_busy = false;
     return;
+  }
+  if(line == 0)
+  {
+    column = _redraw_xstart;
+    line = _redraw_ystart;
   }
 
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_SET);
-  while(column<ST7735_WIDTH) // Going through every pixel horizontally 
-  {
-    color = _redraw_palette[(st7735_buffer[start+(column>>1)]>>((~column&1)<<2))&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
-    st7735_linebuffer[(column*3)>>1]      &= 0x0F00>>((column&1)<<2); // no shift for even, >>4 for odd
-    st7735_linebuffer[((column*3)>>1)+1]  &= 0x000F>>((column&1)<<2); // no shift for even, >>4 for odd
 
-    if (~column&1)
+  while((bitcounter<960) && (line<=_redraw_ystop)) // Filling 120-byte buffer
+  {
+    color = _redraw_palette[( st7735_buffer[(line*ST7735_WIDTH+column)>>1] >> ((~(line*ST7735_WIDTH+column)&1)<<2) )&0x0F]; // each byte contains info about 2 pixels, so index increments twice as slow. Checking high nibble first
+    st7735_linebuffer[bitcounter>>3]      &= 0xF00>>(bitcounter&0x04); // no shift for even, >>4 for odd
+    st7735_linebuffer[(bitcounter>>3)+1]  &= 0x00F>>(bitcounter&0x04); // no shift for even, >>4 for odd
+
+    if (bitcounter&0x07)
     {
-      st7735_linebuffer[(column*3)>>1]      |= color>>4;
-      st7735_linebuffer[((column*3)>>1)+1]  |= color<<4;
+      st7735_linebuffer[bitcounter>>3]      |= color>>8;
+      st7735_linebuffer[(bitcounter>>3)+1]  |= color;
     }
     else
     {
-      st7735_linebuffer[(column*3)>>1]      |= color>>8;
-      st7735_linebuffer[((column*3)>>1)+1]  |= color;
+      st7735_linebuffer[bitcounter>>3]      |= color>>4;
+      st7735_linebuffer[(bitcounter>>3)+1]  |= color<<4;
     }
+
+    bitcounter+=12;
     column++;
+
+    if (column > _redraw_xstop)
+    {
+      column = _redraw_xstart;
+      line++;
+    }
   }
-  HAL_SPI_Transmit_IT(hspi, st7735_linebuffer, (ST7735_WIDTH*3/2));
   
-  start += column>>1;
+  HAL_SPI_Transmit_IT(hspi, st7735_linebuffer, bitcounter>>3);
+  bitcounter = 0;
 }
 
 void sendCommandData(uint8_t cmd, const uint8_t *addr, uint16_t numArgs)
@@ -244,11 +257,13 @@ void sendCommand(uint8_t cmd)
 
 void redraw(void)
 {
+  redraw_busy = true;
   _redraw_xstart = 0;
   _redraw_ystart = 0;
-  _redraw_xstop = _width;
-  _redraw_ystop = _height;
+  _redraw_xstop = _width-1;
+  _redraw_ystop = _height-1;
   _redraw_palette = (uint16_t*)&st7735_palette;
+  setAddrWindow(0, 0, ST7735_WIDTH, ST7735_HEIGHT);
   uint8_t cmd = ST77XX_RAMWR;
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
@@ -258,12 +273,15 @@ void redraw(void)
 
 void redraw_partial(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t* palette)
 {
+  redraw_busy = true;
   _redraw_xstart = x;
   _redraw_ystart = y;
-  _redraw_xstop = x+w;
-  _redraw_ystop = y+h;
+  _redraw_xstop = x+w-1;
+  _redraw_ystop = y+h-1;
   _redraw_palette = palette;
-  uint8_t cmd = ST77XX_RAMWR;
+
+  setAddrWindow(x, y, w, h);
+  uint8_t cmd  = ST77XX_RAMWR;
   HAL_GPIO_WritePin(ST7735_CS_PIN, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ST7735_DC_PIN, GPIO_PIN_RESET);
   HAL_SPI_Transmit_IT(ST7735_SPI, &cmd, 1);
@@ -311,9 +329,9 @@ void ST77XX_sendInitSequence(const uint8_t *addr) {
 */
 /**************************************************************************/
 void setAddrWindow(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
-  uint8_t BufferX [4] = {0x00, x, 0x00, (x+w-1)};
+  uint8_t BufferX [4] = {0x00, ST7735_XOFFSET+x, 0x00, (ST7735_XOFFSET+x+w-1)};
   sendCommandData(ST77XX_CASET, BufferX, 4); // Column addr set
-  uint8_t BufferY [4] = {0x00, y, 0x00, (y+h-1)};
+  uint8_t BufferY [4] = {0x00, ST7735_YOFFSET+y, 0x00, (ST7735_YOFFSET+y+h-1)};
   sendCommandData(ST77XX_RASET, BufferY, 4);// Row addr set
   //SPI_WRITE32(ya);
 
@@ -362,7 +380,7 @@ void enableTearing(bool enable) {
 }
 
 /**************************************************************************/
-/*!
+/*!@yadrenbaton13
  @brief  Change whether sleep mode is on or off
  @param  enable True if you want sleep mode ON, false OFF
  */
@@ -411,8 +429,8 @@ void initR(SPI_HandleTypeDef *hspi) {
   ST77XX_sendInitSequence(Rcmd3);
 
   // Black tab, change MADCTL color filter
-  uint8_t data = 0xC8;
-  sendCommandData(ST77XX_MADCTL, &data, 1);
+  //uint8_t data = 0xC8;
+  //sendCommandData(ST77XX_MADCTL, &data, 1); //redundant
 
   setRotation(0);
 }

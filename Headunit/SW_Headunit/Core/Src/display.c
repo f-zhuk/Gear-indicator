@@ -49,7 +49,7 @@ void setCursor(float x, float y)
     display.ycursor = y;
 }
 
-void putChar(uint8_t character)
+void putChar(uint8_t character)//, font_t font)
 {
     font_t font = lv_font_montserrat_20;
     uint8_t cmap = 0;

@@ -1,10 +1,10 @@
 /**
- * @file lv_types.h
+ * @file fonts.h
  *
  */
 
-#ifndef LV_TYPES_H
-#define LV_TYPES_H
+#ifndef FONTS_H
+#define FONTS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -606,6 +606,8 @@ typedef struct{
 /**********************
  *      MACROS
  **********************/
+extern const font_t lv_font_montserrat_20;
+
 
 #define LV_UNUSED(x) ((void)x)
 
@@ -660,4 +662,4 @@ extern const font_t lv_font_montserrat_20;
 } /*extern "C"*/
 #endif
 
-#endif /*LV_TYPES_H*/
+#endif /*FONTS_H*/

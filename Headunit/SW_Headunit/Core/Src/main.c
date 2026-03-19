@@ -33,6 +33,7 @@ enum DIRECTION_ENUM // арифметическая операция
 {
   DIRECTION_UNKNOWN,
   DIRECTION_UP,
+#include "fonts.h"
   DIRECTION_DOWN
 };
 
@@ -234,8 +235,8 @@ int main(void)
   displayInit(getBufferPointer(), ST7735_WIDTH, ST7735_HEIGHT);
   enableDisplay(false);
   enableInvert(true);
-  fillRectangle(80,82,0x00);
-  setCursor(-1,-1);
+  setCursor(0,0);
+  fillRectangle(80,160,0x00);
 
   redraw();
   enableDisplay(true);
@@ -257,33 +258,33 @@ int main(void)
     //setCursor(-i,33);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
     setCursor(-shift,32);
-    putChar('1');
-    putChar('2');
-    putChar('3');
-    putChar('4');
-    putChar('5');
-    putChar('6');
-    putChar('7');
-    putChar('8');
-    putChar('9');
+    putChar('1');//, lv_font_montserrat_20);
+    //putChar('2');
+    //putChar('3');
+    //putChar('4');
+    //putChar('5');
+    //putChar('6');
+    //putChar('7');
+    //putChar('8');
+    //putChar('9');
     //putChar('!');
     
     setCursor(0,55);
     fillRectangle(80,25,0x00);
     setCursor(10,70);
-    putChar(0x30+shifter[0].gear_total);
+    //putChar(0x30+shifter[0].gear_total);
     setCursor(30,70);
-    putChar(0x30+shifter[1].gear_total);
+    //putChar(0x30+shifter[1].gear_total);
     
-    /*setCursor(0,0);
-    fillRectangle(80,10,0x00);
+    setCursor(0,0);
+    fillRectangle(80,10,i);
     setCursor(0,10);
     fillRectangle(80,10,0x01);
-    setCursor(0,20);
-    fillRectangle(80,10,0x02);
-    setCursor(0,30);
-    fillRectangle(80,10,0x03);
-    setCursor(0,40);
+    //setCursor(0,20);
+    //fillRectangle(80,10,0x02);
+    //setCursor(0,30);
+    //fillRectangle(80,10,0x03);
+    /*setCursor(0,40);
     fillRectangle(80,10,0x04);
     setCursor(0,50);
     fillRectangle(80,10,0x05);
@@ -314,7 +315,15 @@ int main(void)
     
 
     //redraw();
-    redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
+    //if (redraw_busy == false)
+    //  redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
+      
+    while (redraw_busy);
+    
+    if (redraw_busy == false)
+      redraw_partial(0, 15, ST7735_WIDTH, 30, (uint16_t*)&st7735_palette);
+      //redraw_partial(0, i&0x1F, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
+    //redraw_partial(0, 80, ST7735_WIDTH, 160, (uint16_t*)&st7735_palette);
     //redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
     //enableDisplay(true);
     HAL_Delay(10);
