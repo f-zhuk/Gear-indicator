@@ -1290,7 +1290,8 @@ font_t lv_font_montserrat_20 =
     .glyph_bitmap = glyph_bitmap_montserrat_20,
     .glyph_dsc = glyph_dsc_montserrat_20,
     .cmaps = cmaps,
-    .cmap_num = 1
+    .cmap_num = 1,
+    .bpp = 4
 };
 
 #endif /*#if LV_FONT_MONTSERRAT_20*/

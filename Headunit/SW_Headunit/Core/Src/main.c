@@ -245,6 +245,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint8_t i=0;
+  uint8_t trigger=0;
   uint8_t shift=0;
   //CO_NMT_t state;
 
@@ -253,13 +254,33 @@ int main(void)
   {
     canopen_app_process();
 
-    setCursor(0,15);
-    fillRectangle(80,25,0x00);
+    setCursor(0,0);
+    fillRectangle(80,81,0x00);
     //setCursor(-i,33);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
-    setCursor(-shift,32);
+    setCursor(-shift,36);
+    
+    putChar('1', lv_font_montserrat_40, 0);
+    putChar('2', lv_font_montserrat_40, 0);
+    putChar('1', lv_font_montserrat_20, 0);
+    putChar('2', lv_font_montserrat_20, 0);
     //putCharTransparent('1');
-    putChar('1', lv_font_montserrat_40);
+    setCursor(-shift,60);
+    putString("CHECK: ", lv_font_unscii_8, 10);
+    setCursor(-shift,70);
+    putString("WARNING: ", lv_font_unscii_8, 14);
+    setCursor(-shift,80);
+    putString("ERROR: ", lv_font_unscii_8, 12);
+    setCursor(70,80);
+    putChar('8', lv_font_unscii_8, 0xF);
+    /*putChar('1', lv_font_unscii_8, 0x1);
+    putChar('2', lv_font_unscii_8, 0x3);
+    putChar('3', lv_font_unscii_8, 0x5);
+    putChar('4', lv_font_unscii_8, 0x7);
+    putChar('5', lv_font_unscii_8, 0x9);
+    putChar('6', lv_font_unscii_8, 0xB);
+    putChar('7', lv_font_unscii_8, 0xD);
+    putChar('8', lv_font_unscii_8, 0xF);*/
     //putChar('2');
     //putChar('3');
     //putChar('4');
@@ -270,22 +291,24 @@ int main(void)
     //putChar('9');
     //putChar('!');
     
-    setCursor(0,55);
-    fillRectangle(80,25,0x00);
-    setCursor(10,70);
+    //setCursor(0,55);
+    //fillRectangle(80,25,0x00);
+    //setCursor(10,70);
     //putChar(0x30+shifter[0].gear_total);
-    setCursor(30,70);
+    //setCursor(30,70);
     //putChar(0x30+shifter[1].gear_total);
     
-    setCursor(0,0);
-    fillRectangle(80,10,i);
-    setCursor(0,10);
-    fillRectangle(80,10,0x01);
+    //setCursor(0,0);
+    //fillRectangle(80,10,i);
+    //setCursor(0,10);
+    //fillRectangle(80,10,0x01);
     //setCursor(0,20);
     //fillRectangle(80,10,0x02);
     //setCursor(0,30);
     //fillRectangle(80,10,0x03);
-    /*setCursor(0,40);
+    
+/*
+    setCursor(0,40);
     fillRectangle(80,10,0x04);
     setCursor(0,50);
     fillRectangle(80,10,0x05);
@@ -319,10 +342,17 @@ int main(void)
     //if (redraw_busy == false)
     //  redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
       
-    while (redraw_busy);
+    //while (redraw_busy);
     
-    if (redraw_busy == false)
-      redraw_partial(0, 15, ST7735_WIDTH, 30, (uint16_t*)&st7735_palette);
+    if (~redraw_busy)
+    {
+      if (trigger)
+        redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
+      else
+        redraw_partial(0, 50, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
+      trigger ^= 0x01;
+    }
+      //redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
       //redraw_partial(0, i&0x1F, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
     //redraw_partial(0, 80, ST7735_WIDTH, 160, (uint16_t*)&st7735_palette);
     //redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
