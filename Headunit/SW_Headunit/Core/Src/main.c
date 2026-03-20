@@ -145,27 +145,31 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
             shifter[sh_num].gear_total += 1;
             shifter[sh_num].position[shifter[sh_num].gear_total] = (max+min)/2;
           }
-          else if ((max+5) < (shifter[sh_num].position[ 1 ]))
+          else if ((max+5) <= (shifter[sh_num].position[ 1 ]))
           {
             //shifter[sh_num].gear =1;
             shifter[sh_num].gear_total += 1;
             for(uint8_t i = shifter[sh_num].gear_total; i>1; i--) // moving all positions up to add one gear to the bottom 
+            {
               shifter[sh_num].position[i] = shifter[sh_num].position[i-1];
+            }
             shifter[sh_num].position[ 1 ] = (max+min)/2;
           }
         }
 
         if (shifter[sh_num].direction == DIRECTION_DOWN)
         {
-          if ((min-5) >= shifter[sh_num].position[ shifter[sh_num].gear_total ])
+          if ((min-5) >= shifter[sh_num].position[ 1 ])
           {
             //shifter[sh_num].gear = gear_total;
             shifter[sh_num].gear_total += 1;
             for(uint8_t i = shifter[sh_num].gear_total; i>1; i--) // moving all positions up to add one gear to the bottom 
+            {
               shifter[sh_num].position[i] = shifter[sh_num].position[i-1];
+            }
             shifter[sh_num].position[ 1 ] = (max+min)/2;
           }
-          else if ((max+5) < (shifter[sh_num].position[ 1 ]))
+          else if ((max+5) <= (shifter[sh_num].position[ shifter[sh_num].gear_total ]))
           {
             //shifter[sh_num].gear =1;
             shifter[sh_num].gear_total += 1;
@@ -255,7 +259,7 @@ int main(void)
     canopen_app_process();
 
     setCursor(0,0);
-    fillRectangle(80,81,0x00);
+    fillRectangle(80,160,0x00);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
 
     setCursor(0,60);
@@ -264,16 +268,16 @@ int main(void)
     putNumber_u8(shifter[0].gear_total, lv_font_unscii_8, RGBI_LT_GREEN);
     setCursor(0,80);
     if(shifter[0].direction==DIRECTION_UNKNOWN)
-      putChar('?', lv_font_unscii_8, 0xF);
+      putChar('?', lv_font_unscii_8, RGBI_WHITE);
     else if(shifter[0].direction==DIRECTION_UP)
-      putChar('U', lv_font_unscii_8, 0xF);
+      putChar('U', lv_font_unscii_8, RGBI_WHITE);
     else if(shifter[0].direction==DIRECTION_DOWN)
-      putChar('D', lv_font_unscii_8, 0xF);
+      putChar('D', lv_font_unscii_8, RGBI_WHITE);
 
     for(uint8_t j=0; j<shifter[0].gear_total; j++)
     {
       setCursor(0,90+j*10);
-      putNumber_u8(shifter[0].position[j=1], lv_font_unscii_8, RGBI_LT_GREEN);
+      putNumber_u8(shifter[0].position[j+1], lv_font_unscii_8, RGBI_LT_GREEN);
     }
     /*setCursor(-shift,36);
     putChar('1', lv_font_montserrat_40, 0);
@@ -347,7 +351,7 @@ int main(void)
       if (trigger)
         redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
       else
-        redraw_partial(0, 50, ST7735_WIDTH, 100, (uint16_t*)&st7735_palette_rgbi);
+        redraw_partial(0, 50, ST7735_WIDTH, 110, (uint16_t*)&st7735_palette_rgbi);
       trigger ^= 0x01;
     }
       //redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
