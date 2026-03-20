@@ -38,6 +38,8 @@ typedef struct {
 void setCursor(float x, float y);
 void putChar(uint8_t character, font_t font, uint8_t color);
 void putString(uint8_t* character, font_t font, uint8_t color);
+void putNumber_u8(uint8_t number, font_t font, uint8_t color);
+void putNumber_i8(int8_t number, font_t font, uint8_t color);
 void fillRectangle(uint16_t width, uint16_t height, uint8_t color);
 void displayInit(uint8_t * target_buffer, uint16_t width, uint16_t height);
 

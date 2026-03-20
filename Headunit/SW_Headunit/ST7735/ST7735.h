@@ -76,7 +76,25 @@
 #define ST77XX_RDID3 0xDC
 #define ST77XX_RDID4 0xDD
 
-
+enum RGBI_COLOR // арифметическая операция
+{
+  RGBI_BLK,
+  RGBI_BLU,
+  RGBI_GREEN,
+  RGBI_CYN,
+  RGBI_RED,
+  RGBI_MAGNT,
+  RGBI_BROWN,
+  RGBI_GRY,
+  RGBI_DARK_GRY,
+  RGBI_LT_BLU,
+  RGBI_LT_GREEN,
+  RGBI_LT_CYN,
+  RGBI_LT_RED,
+  RGBI_LT_MAGNT,
+  RGBI_YEL,
+  RGBI_WHITE
+};
 //extern SPI_HandleTypeDef *ST7735_SPI;
 //extern uint8_t st7735_buffer[ST7735_BUFFER];
 extern bool redraw_busy;

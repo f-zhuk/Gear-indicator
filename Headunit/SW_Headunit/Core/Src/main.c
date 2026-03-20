@@ -84,7 +84,7 @@ static void MX_TIM4_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) 
 {
   static uint16_t overflow_counter = 0; //15:12 - reserved, 11:7 - 32 samples, 6 - shifter interleave, 5:1 64ms delay
-  int16_t shift; //Needed for easier operations with boudaries
+  int16_t shift = 0; //Needed for easier operations with boudaries
   uint8_t sh_num;
   if (htim == canopenNodeSTM32->timerHandle) 
   {
@@ -256,24 +256,39 @@ int main(void)
 
     setCursor(0,0);
     fillRectangle(80,81,0x00);
-    //setCursor(-i,33);
     OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
-    setCursor(-shift,36);
-    
+
+    setCursor(0,60);
+    putNumber_u8(shift, lv_font_unscii_8, RGBI_LT_GREEN);
+    setCursor(0,70);
+    putNumber_u8(shifter[0].gear_total, lv_font_unscii_8, RGBI_LT_GREEN);
+    setCursor(0,80);
+    if(shifter[0].direction==DIRECTION_UNKNOWN)
+      putChar('?', lv_font_unscii_8, 0xF);
+    else if(shifter[0].direction==DIRECTION_UP)
+      putChar('U', lv_font_unscii_8, 0xF);
+    else if(shifter[0].direction==DIRECTION_DOWN)
+      putChar('D', lv_font_unscii_8, 0xF);
+
+    for(uint8_t j=0; j<shifter[0].gear_total; j++)
+    {
+      setCursor(0,90+j*10);
+      putNumber_u8(shifter[0].position[j=1], lv_font_unscii_8, RGBI_LT_GREEN);
+    }
+    /*setCursor(-shift,36);
     putChar('1', lv_font_montserrat_40, 0);
     putChar('2', lv_font_montserrat_40, 0);
     putChar('1', lv_font_montserrat_20, 0);
     putChar('2', lv_font_montserrat_20, 0);
-    //putCharTransparent('1');
     setCursor(-shift,60);
-    putString("CHECK: ", lv_font_unscii_8, 10);
+    putString("CHECK: ", lv_font_unscii_8, RGBI_LT_GREEN);
     setCursor(-shift,70);
     putString("WARNING: ", lv_font_unscii_8, 14);
     setCursor(-shift,80);
     putString("ERROR: ", lv_font_unscii_8, 12);
     setCursor(70,80);
     putChar('8', lv_font_unscii_8, 0xF);
-    /*putChar('1', lv_font_unscii_8, 0x1);
+    putChar('1', lv_font_unscii_8, 0x1);
     putChar('2', lv_font_unscii_8, 0x3);
     putChar('3', lv_font_unscii_8, 0x5);
     putChar('4', lv_font_unscii_8, 0x7);
@@ -281,15 +296,6 @@ int main(void)
     putChar('6', lv_font_unscii_8, 0xB);
     putChar('7', lv_font_unscii_8, 0xD);
     putChar('8', lv_font_unscii_8, 0xF);*/
-    //putChar('2');
-    //putChar('3');
-    //putChar('4');
-    //putChar('5');
-    //putChar('6');
-    //putChar('7');
-    //putChar('8');
-    //putChar('9');
-    //putChar('!');
     
     //setCursor(0,55);
     //fillRectangle(80,25,0x00);
@@ -332,34 +338,24 @@ int main(void)
     fillRectangle(80,10,0x0E);
     setCursor(0,150);
     fillRectangle(80,10,0x0F);s*/
+
     //fillRectangle(20,2,i);
     i++;
-    //if (i%15 == 0)
-    //  setCursor(2,2);
     
-
-    //redraw();
-    //if (redraw_busy == false)
-    //  redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
-      
-    //while (redraw_busy);
-    
-    if (~redraw_busy)
+    if (!redraw_busy)
     {
       if (trigger)
         redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
       else
-        redraw_partial(0, 50, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
+        redraw_partial(0, 50, ST7735_WIDTH, 100, (uint16_t*)&st7735_palette_rgbi);
       trigger ^= 0x01;
     }
       //redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
       //redraw_partial(0, i&0x1F, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_rgbi);
     //redraw_partial(0, 80, ST7735_WIDTH, 160, (uint16_t*)&st7735_palette);
     //redraw_partial(0, 0, ST7735_WIDTH, 80, (uint16_t*)&st7735_palette_red);
-    //enableDisplay(true);
+
     HAL_Delay(10);
-    
-    //if(shift>0x80)
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     /* USER CODE END WHILE */
 

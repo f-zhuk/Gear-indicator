@@ -57,7 +57,7 @@ void putChar(uint8_t character, font_t font, uint8_t color) // color used only f
     uint8_t * bm = font.glyph_bitmap;  // Bitmap
 
     int16_t xstart = (int16_t)display.xcursor+font.glyph_dsc[character].ofs_x;
-    int16_t ystart = (int16_t)display.ycursor+font.glyph_dsc[character].ofs_y+font.base_line-font.glyph_dsc[character].box_h;
+    int16_t ystart = (int16_t)display.ycursor-font.glyph_dsc[character].ofs_y+font.base_line-font.glyph_dsc[character].box_h;
 
     int16_t box_w = font.glyph_dsc[character].box_w;
     if(xstart+box_w>display.width) // Check right
@@ -110,6 +110,29 @@ void putString(uint8_t* string, font_t font, uint8_t color) // color used only f
         putChar(*string, font, color);
         string++;
     }
+}
+
+void putNumber_u8(uint8_t number, font_t font, uint8_t color) // color used only for 1bpp fonts
+{
+    uint8_t string[4] = {'0'+(number/100)%10, '0'+(number/10)%10, '0'+number%10, 0};
+    putString((uint8_t*)&string, font, color);
+}
+
+void putNumber_i8(int8_t number, font_t font, uint8_t color) // color used only for 1bpp fonts
+{    
+    if (number > 0)
+    {
+        uint8_t string[5] = {'+', '0'+(number/100)%10, '0'+(number/10)%10, '0'+number%10, 0};
+        putString((uint8_t*)&string, font, color);
+    }
+    else if (number < 0)
+    {
+        uint8_t abs = -number;
+        uint8_t string[5] = {'-', '0'+(abs/100)%10, '0'+(abs/10)%10, '0'+abs%10, 0};
+        putString((uint8_t*)&string, font, color);
+    }
+    else
+        putChar('0', font, color);
 }
 
 void fillRectangle(uint16_t width, uint16_t height, uint8_t color)
