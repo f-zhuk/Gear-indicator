@@ -32,14 +32,14 @@
 /* USER CODE BEGIN PTD */
 enum DIRECTION_ENUM // арифметическая операция
 {
+  DIRECTION_DOWN = -1,
   DIRECTION_UNKNOWN,
-  DIRECTION_UP,
-  DIRECTION_DOWN
+  DIRECTION_UP
 };
 
 typedef struct {
   OD_entry_t* CAN_entry;
-  uint8_t direction;
+  int8_t direction;
   //uint8_t gear;
   uint8_t gear_total;
   uint8_t position[16];
@@ -250,7 +250,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t i=0;
   uint8_t trigger=0;
-  uint8_t shift=0;
+  uint8_t shift[2]={0, 0};
   //CO_NMT_t state;
 
   setCursor(2,2);
@@ -259,14 +259,59 @@ int main(void)
     canopen_app_process();
 
     setCursor(0,0);
-    fillRectangle(80,160,0x00);
-    OD_get_u8(OD_find(OD,0x6001), 0x01, &shift, false);
+    fillRectangle(80,60,0x00);
+    OD_get_u8(OD_find(OD,0x6001), 0x01, &shift[0], false);
+
+    if ((shift[0]==0) || (shifter[0].gear_total==0) || (shifter[0].direction==DIRECTION_UNKNOWN))
+    {
+      setCursor(30,40);
+      putChar('?', lv_font_montserrat_40, 0);
+    }
+    else 
+    {
+      uint8_t gear = 1;
+      while ((shifter[0].direction*shift[0] > shifter[0].direction*shifter[0].position[gear]) && (gear<=shifter[0].gear_total)) 
+          gear++;
+      /*if (shifter[0].direction==DIRECTION_UP)
+      {
+        while ((shift[0] > shifter[0].position[gear]) && (gear<=shifter[0].gear_total)) 
+          gear++;
+      }
+      else if (shifter[0].direction==DIRECTION_DOWN)
+      {
+        while ((shift[0] > shifter[0].position[gear]) && (gear<=shifter[0].gear_total)) 
+          gear++;
+      }*/
+
+      if(gear == 1) //possible only below the range
+      {
+        setCursor(30,40+shifter[0].direction*(shifter[0].position[gear] - shift[0]));
+        putChar('1'/*+gear-1*/, lv_font_montserrat_40, 0);
+      }
+      else if (gear > shifter[0].gear_total) //possible only above the range
+      {
+        gear--;
+        setCursor(30,40+shifter[0].direction*(shifter[0].position[gear] - shift[0]));
+        putChar('1'+gear-1, lv_font_montserrat_40, 0);
+      }
+      else
+      {
+        uint8_t offset = 56*((int16_t)shift[0] - (int16_t)shifter[0].position[gear-1])/((int16_t)shifter[0].position[gear]-(int16_t)shifter[0].position[gear-1]);
+        setCursor(30,40-offset);
+        putChar('1'+gear-2, lv_font_montserrat_40, 0);
+        setCursor(30,40+20+36-offset);
+        putChar('1'+gear-1, lv_font_montserrat_40, 0);
+      }
+
+    }
 
     setCursor(0,60);
-    putNumber_u8(shift, lv_font_unscii_8, RGBI_LT_GREEN);
+    fillRectangle(80,60,0x00);
     setCursor(0,70);
-    putNumber_u8(shifter[0].gear_total, lv_font_unscii_8, RGBI_LT_GREEN);
+    putNumber_u8(shift[0], lv_font_unscii_8, RGBI_LT_GREEN);
     setCursor(0,80);
+    putNumber_u8(shifter[0].gear_total, lv_font_unscii_8, RGBI_LT_GREEN);
+    setCursor(0,90);
     if(shifter[0].direction==DIRECTION_UNKNOWN)
       putChar('?', lv_font_unscii_8, RGBI_WHITE);
     else if(shifter[0].direction==DIRECTION_UP)
@@ -276,7 +321,7 @@ int main(void)
 
     for(uint8_t j=0; j<shifter[0].gear_total; j++)
     {
-      setCursor(0,90+j*10);
+      setCursor(0,100+j*10);
       putNumber_u8(shifter[0].position[j+1], lv_font_unscii_8, RGBI_LT_GREEN);
     }
     /*setCursor(-shift,36);
@@ -349,7 +394,7 @@ int main(void)
     if (!redraw_busy)
     {
       if (trigger)
-        redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
+        redraw_partial(0, 0, ST7735_WIDTH, 50, (uint16_t*)&st7735_palette);
       else
         redraw_partial(0, 50, ST7735_WIDTH, 110, (uint16_t*)&st7735_palette_rgbi);
       trigger ^= 0x01;
