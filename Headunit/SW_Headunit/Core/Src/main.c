@@ -305,7 +305,7 @@ int main(void)
 
     }
 
-    setCursor(0,60);
+    /*setCursor(0,60);
     fillRectangle(80,60,0x00);
     setCursor(0,70);
     putNumber_u8(shift[0], lv_font_unscii_8, RGBI_LT_GREEN);
@@ -324,7 +324,9 @@ int main(void)
       setCursor(0,100+j*10);
       putNumber_u8(shifter[0].position[j+1], lv_font_unscii_8, RGBI_LT_GREEN);
     }
-    /*setCursor(-shift,36);
+
+
+    setCursor(-shift,36);
     putChar('1', lv_font_montserrat_40, 0);
     putChar('2', lv_font_montserrat_40, 0);
     putChar('1', lv_font_montserrat_20, 0);
@@ -393,10 +395,10 @@ int main(void)
     
     if (!redraw_busy)
     {
-      if (trigger)
+      //if (trigger)
         redraw_partial(0, 0, ST7735_WIDTH, 50, (uint16_t*)&st7735_palette);
-      else
-        redraw_partial(0, 50, ST7735_WIDTH, 110, (uint16_t*)&st7735_palette_rgbi);
+      //else
+      //  redraw_partial(0, 50, ST7735_WIDTH, 110, (uint16_t*)&st7735_palette_rgbi);
       trigger ^= 0x01;
     }
       //redraw_partial(0, 0, ST7735_WIDTH, 44, (uint16_t*)&st7735_palette);
