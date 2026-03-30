@@ -1,4 +1,4 @@
-26977743558418286
+26979518133388641
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -106042,6 +106042,13 @@ Texas_RPW0010A_VQFN-HR
 0
 18
 10
+USER
+USB_C_Receptacle_HRO_TYPE-C-31-E-08
+USB Type-C receptacle for USB 2.0, 6 pin, https://omo-oss-file.thefastfile.com/portal-saas/new2023011311465142457/cms/file/134891b2-9b01-4104-89d3-96207243f692.pdf
+usb usb-c 2.0 pd
+0
+10
+7
 USER
 XB-PJ-1837
 TRS 3.5mm, horizontal, through-hole, https://www.cuidevices.com/product/resource/pdf/sj1-352xn.pdf
